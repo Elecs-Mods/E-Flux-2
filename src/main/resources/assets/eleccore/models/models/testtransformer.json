@@ -1,0 +1,10 @@
+{
+
+	"parent": "eleccore:block/orientable",
+    "textures": {
+        "top": "eleccore:blocks/normal",
+        "front": "eleccore:blocks/black",
+        "side": "eleccore:blocks/default_back"
+    }
+
+}
