@@ -76,10 +76,7 @@ minecraft {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.13.2-25.0.37'
 
-    compile "mcp.mobius.waila:Hwyla:1.10.0-B52_1.13.2:sources"
     compile "mcp.mobius.waila:Hwyla:1.10.0-B52_1.13.2"
-
-
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..

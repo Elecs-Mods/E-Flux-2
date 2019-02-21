@@ -8,6 +8,7 @@ import com.google.common.collect.Sets;
 import elec332.core.util.EnumBitSet;
 import elec332.core.util.HitboxHelper;
 import elec332.core.world.WorldHelper;
+import elec332.test.TestMod;
 import elec332.test.api.TestModAPI;
 import elec332.test.api.electricity.IElectricityDevice;
 import elec332.test.api.electricity.IEnergyObject;
@@ -70,6 +71,7 @@ public class GroundWire {
     private int colors = 0;
     private VoxelShape shape, smallShape, extendedShape;
     private WireData wireDataBase;
+    private boolean cChange;
 
     private EnumBitSet<EnumFacing> connections;
     private Set<EnumFacing> connections_;
@@ -180,6 +182,10 @@ public class GroundWire {
         colors.forEach(c -> addColorInternal(c, false));
         setShape();
         fullSync();
+        cChange = true;
+        if (wire != null) {
+            wire.getWorld().neighborChanged(wire.getPos(), TestMod.WIRE_MARKER, wire.getPos());
+        }
         return true;
     }
 
@@ -211,6 +217,8 @@ public class GroundWire {
             return;
         }
 
+        boolean intCh = cChange;
+        cChange = false;
         EnumBitSet<EnumFacing> newConnections = EnumBitSet.noneOf(EnumFacing.class);
         int[] newWireConnections = new int[4];
         BitSet newExtended = new BitSet(4);
@@ -268,7 +276,9 @@ public class GroundWire {
                             newCps[i] = cps[i];
                             break;
                         }
-                        continue;
+                        if (!intCh) {
+                            continue;
+                        }
                     }
 
                     //System.out.println("Checking: " + iF + " " + cp + "  " + pos);

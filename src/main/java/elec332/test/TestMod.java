@@ -6,6 +6,7 @@ import elec332.core.client.RenderHelper;
 import elec332.core.data.SaveHandler;
 import elec332.core.grid.IStructureWorldEventHandler;
 import elec332.core.handler.ElecCoreRegistrar;
+import elec332.core.inventory.window.WindowManager;
 import elec332.core.util.FMLHelper;
 import elec332.core.util.RegistryHelper;
 import elec332.test.api.TestModAPI;
@@ -20,9 +21,11 @@ import elec332.test.client.TerminalColor;
 import elec332.test.client.wire.TerminalItemModelCache;
 import elec332.test.client.wire.WireModelCache;
 import elec332.test.electricity.grid.ElectricityGridHandler;
+import elec332.test.inventory.window.EFluxWindowHandler;
 import elec332.test.item.ItemGroundTerminal;
 import elec332.test.item.ItemGroundWire;
 import elec332.test.item.ItemOverheadWire;
+import elec332.test.item.ItemWireManager;
 import elec332.test.tile.TileTestReceiver;
 import elec332.test.tile.TileTestTransformer;
 import elec332.test.util.SubTileRegistry;
@@ -94,6 +97,7 @@ public class TestMod {
                 itemRegister.getRegistry().register(wire);
                 itemRegister.getRegistry().register(terminal);
                 itemRegister.getRegistry().register(new ItemOverheadWire(new Item.Properties().group(test)).setRegistryName(new TestModResourceLocation("overhead_wire")));
+                itemRegister.getRegistry().register(new ItemWireManager(new Item.Properties().group(test)).setRegistryName(new TestModResourceLocation("wire_manager")));
                 refor(b1, itemRegister.getRegistry());
                 refor(b2, itemRegister.getRegistry());
                 refor(b3, itemRegister.getRegistry());
@@ -135,6 +139,7 @@ public class TestMod {
         SaveHandler.INSTANCE.registerSaveHandler(FMLHelper.getActiveModContainer(), OverheadWireHandler.INSTANCE);
         ElecCore.networkHandler.registerNetworkObject(OverHeadWireHandlerClient.INSTANCE, OverheadWireHandler.INSTANCE);
         Arrays.stream(EnumWireType.values()).forEach(wireTypeRegistry::register);
+        WindowManager.INSTANCE.register(EFluxWindowHandler.INSTANCE, new TestModResourceLocation("meh"));
     }
 
     public void postInit() {

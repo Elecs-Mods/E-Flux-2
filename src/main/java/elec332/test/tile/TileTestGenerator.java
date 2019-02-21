@@ -9,16 +9,15 @@ import elec332.core.inventory.widget.WidgetEnumChange;
 import elec332.core.inventory.widget.slot.WidgetSlot;
 import elec332.core.inventory.window.ISimpleWindowFactory;
 import elec332.core.inventory.window.Window;
-import elec332.core.tile.AbstractTileEntity;
 import elec332.core.tile.ITileWithDrops;
-import elec332.core.util.*;
+import elec332.core.util.InventoryHelper;
+import elec332.core.util.ItemStackHelper;
+import elec332.core.util.ObjectReference;
+import elec332.core.util.PlayerHelper;
 import elec332.core.world.WorldHelper;
-import elec332.test.api.TestModAPI;
-import elec332.test.api.electricity.DefaultElectricityDevice;
 import elec332.test.api.electricity.IEnergySource;
 import elec332.test.api.electricity.component.EnumElectricityType;
 import elec332.test.api.util.BreakReason;
-import elec332.test.api.util.ConnectionPoint;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
@@ -32,17 +31,14 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 /**
  * Created by Elec332 on 23-11-2017.
  */
 @RegisteredTileEntity("hatseflats")
-public class TileTestGenerator extends AbstractTileEntity implements IEnergySource, ISimpleWindowFactory, ITileWithDrops, ITickable, IInfoProvider, IActivatableTile {
+public class TileTestGenerator extends AbstractEnergyObjectTile implements IEnergySource, ISimpleWindowFactory, ITileWithDrops, ITickable, IInfoProvider, IActivatableTile {
 
     public TileTestGenerator() {
         inventory = new BasicItemHandler(1) {
@@ -60,7 +56,6 @@ public class TileTestGenerator extends AbstractTileEntity implements IEnergySour
     private int voltage, burnTime;
     private BasicItemHandler inventory;
     private boolean active;
-    private ConnectionPoint cp1, cp2;
     private ObjectReference<EnumElectricityType> type = ObjectReference.of(EnumElectricityType.AC);
 
     @Override
@@ -158,20 +153,11 @@ public class TileTestGenerator extends AbstractTileEntity implements IEnergySour
 
         });
         window.addPlayerInventoryToContainer();
-        window.addWidget(new WidgetEnumChange<>(2, 2, 30, 30, EnumElectricityType.class).addButtonEvent((WidgetEnumChange.IEnumChangedEvent<WidgetEnumChange<EnumElectricityType>>) w -> {
-            System.out.println(FMLHelper.getLogicalSide() + "  " + w.getEnum());
-            type.set(w.getEnum());
-        }));
+        window.addWidget(new WidgetEnumChange<>(2, 2, 30, 30, EnumElectricityType.class).onValueChanged(type::set));
     }
 
     public boolean isActive() {
         return active;
-    }
-
-    @Override
-    @SuppressWarnings("all")
-    public <T> LazyOptional<T> getCapability(Capability<T> capability, EnumFacing facing) {
-        return capability == TestModAPI.ELECTRICITY_CAP ? LazyOptional.of(() -> new DefaultElectricityDevice(this)).cast() : super.getCapability(capability, facing);
     }
 
     @Override
@@ -207,32 +193,14 @@ public class TileTestGenerator extends AbstractTileEntity implements IEnergySour
         return type.get();
     }
 
-    @Nonnull
     @Override
-    public ConnectionPoint getConnectionPoint(int post) {
-        return post == 0 ? cp1 : cp2;
-    }
-
-    @Nullable
-    @Override
-    public ConnectionPoint getConnectionPoint(EnumFacing side, Vec3d hitVec) {
-        return side != getTileFacing().getOpposite() ? null : (hitVec.y > 0.5 ? cp2 : cp1);
+    protected Object createConnectionPoint(int post) {
+        return connectionPointHandler.makeConnectionPoint(getTileFacing().getOpposite(), post, EnumFacing.DOWN);
     }
 
     @Override
-    public void updateContainingBlockInfo() {
-        super.updateContainingBlockInfo();
-        createConnectionPoints();
-    }
-
-    @Override
-    public void onLoad() {
-        createConnectionPoints();
-    }
-
-    private void createConnectionPoints() {
-        cp1 = new ConnectionPoint(pos, world, getTileFacing().getOpposite(), 1, EnumFacing.DOWN);
-        cp2 = new ConnectionPoint(pos, world, getTileFacing().getOpposite(), 2, EnumFacing.DOWN);
+    public Object getConnectionPointRef(EnumFacing side, Vec3d hitVec) {
+        return side != getTileFacing().getOpposite() ? null : getConnectionPointRef(hitVec.y > 0.5 ? 0 : 1);
     }
 
     @Override
@@ -241,6 +209,7 @@ public class TileTestGenerator extends AbstractTileEntity implements IEnergySour
         WorldHelper.spawnExplosion(getWorld(), pos.getX(), pos.getY(), pos.getZ(), reason.ordinal() * 0.3f + 0.1f);
     }
 
+    //copied from vanilla TODO: AT
     private static int getItemBurnTime(ItemStack stack) {
         if (stack.isEmpty()) {
             return 0;
