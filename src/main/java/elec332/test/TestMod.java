@@ -1,6 +1,6 @@
 package elec332.test;
 
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableList;
 import elec332.core.ElecCore;
 import elec332.core.client.RenderHelper;
 import elec332.core.data.SaveHandler;
@@ -18,7 +18,6 @@ import elec332.test.block.BlockGenerator;
 import elec332.test.block.BlockTest;
 import elec332.test.block.BlockTile;
 import elec332.test.client.TerminalColor;
-import elec332.test.client.wire.TerminalItemModelCache;
 import elec332.test.client.wire.WireModelCache;
 import elec332.test.electricity.grid.ElectricityGridHandler;
 import elec332.test.inventory.window.EFluxWindowHandler;
@@ -31,7 +30,8 @@ import elec332.test.tile.TileTestTransformer;
 import elec332.test.util.SubTileRegistry;
 import elec332.test.util.TestModResourceLocation;
 import elec332.test.wire.EnumWireType;
-import elec332.test.wire.ground.tile.ISubTileWire;
+import elec332.test.wire.ground.GroundWire;
+import elec332.test.wire.ground.tile.IWireContainer;
 import elec332.test.wire.ground.tile.SubTileWire;
 import elec332.test.wire.overhead.OverHeadWireHandlerClient;
 import elec332.test.wire.overhead.OverheadWireHandler;
@@ -45,16 +45,18 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
-import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.javafmlmod.FMLModContainer;
 import net.minecraftforge.registries.IForgeRegistry;
 
-import java.util.Arrays;
-import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by Elec332 on 31-1-2019
@@ -72,7 +74,6 @@ public class TestMod {
     public static Item terminal = new ItemGroundTerminal(new Item.Properties().group(test)).setRegistryName(new TestModResourceLocation("terminaltest"));
 
     public static WireModelCache model = new WireModelCache();
-    public static TerminalItemModelCache terminalModel = new TerminalItemModelCache();
 
     public static Block b1, b2, b3, b4;
 
@@ -114,15 +115,15 @@ public class TestMod {
 
     public static IElectricityGridHandler electricityGridHandler;
 
-    @CapabilityInject(ISubTileWire.class)
-    public static Capability<ISubTileWire> WIRE_CAPABILITY;
+    @CapabilityInject(IWireContainer.class)
+    public static Capability<IWireContainer> WIRE_CAPABILITY;
 
     @CapabilityInject(ISubTileTerminal.class)
     public static Capability<ISubTileTerminal> TERMINAL_CAPABILITY;
 
     public void preInit() {
         System.out.println("preinit");
-        RegistryHelper.registerEmptyCapability(ISubTileWire.class);
+        RegistryHelper.registerEmptyCapability(IWireContainer.class);
         RegistryHelper.registerEmptyCapability(IElectricityDevice.class);
         RegistryHelper.registerEmptyCapability(ISubTileTerminal.class);
         ElecCoreRegistrar.GRIDHANDLERS.register((IStructureWorldEventHandler) (electricityGridHandler = new ElectricityGridHandler()));
@@ -144,17 +145,50 @@ public class TestMod {
 
     public void postInit() {
         System.out.println("postinit");
-        SubTileRegistry.INSTANCE.registerCapabilityCombiner(TestModAPI.ELECTRICITY_CAP, lazyOptionals -> {
-            Set<IEnergyObject> objects = Sets.newHashSet();
-            lazyOptionals.forEach(c -> {
-                if (!c.isPresent()) {
-                    throw new RuntimeException();
+        SubTileRegistry.INSTANCE.registerCapabilityInstanceCombiner(TestModAPI.ELECTRICITY_CAP, devices -> {
+            final Set<IEnergyObject> objects = devices.stream().map(IElectricityDevice::getInternalComponents).flatMap(Collection::stream).collect(Collectors.toSet());
+            return () -> objects;
+        });
+        SubTileRegistry.INSTANCE.setCapabilityCacheable(TestMod.WIRE_CAPABILITY);
+        //My eyes...
+        SubTileRegistry.INSTANCE.registerCapabilityInstanceCombiner(TestMod.WIRE_CAPABILITY, stw -> new IWireContainer() {
+
+            {
+                wires = ImmutableList.copyOf(stw);
+                List<IWireContainer> l = stw.stream().filter(IWireContainer::isRealWireContainer).collect(Collectors.toList());
+                if (l.size() > 1){
+                    throw new UnsupportedOperationException();
                 }
-                objects.addAll(c.orElseThrow(NullPointerException::new).getInternalComponents());
-            });
-            LazyOptional<IElectricityDevice> ret = LazyOptional.of(() -> (IElectricityDevice) () -> objects);
-            lazyOptionals.forEach(lo -> lo.addListener(lo2 -> ret.invalidate()));
-            return ret;
+                main = l.isEmpty() ? null : l.get(0);
+            }
+
+
+            private final List<IWireContainer> wires;
+            private final IWireContainer main;
+
+            @Override
+            public boolean addWire(GroundWire wire) {
+                for (IWireContainer wc : wires){
+                    if (wc.addWire(wire)){
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            @Nullable
+            @Override
+            public GroundWire getWire(EnumFacing facing) {
+                return main == null ? null : main.getWire(facing);
+            }
+
+            @Nonnull
+            @Override
+            public List<GroundWire> getWireView() {
+                return main == null ? ImmutableList.of() : main.getWireView();
+            }
+
+
         });
     }
 

@@ -120,7 +120,6 @@ public class ConnectionPointHandler {
     }
 
     public void read(NBTTagCompound tag) {
-        System.out.println("rerer");
         NBTTagList list = tag.getList("sidm", NBTTypes.INT.getID());
         subIdMap.clear();
         for (int i = 0; i < list.size(); i++) {

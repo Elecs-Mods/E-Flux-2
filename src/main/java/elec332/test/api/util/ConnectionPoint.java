@@ -95,7 +95,7 @@ public class ConnectionPoint {
             tag.putString("bpS", getSide().getName());
         }
         tag.putInt("bpN", getSideNumber());
-        tag.putString("bpW", Preconditions.checkNotNull(getWorld().getRegistryName()).toString());
+        tag.putString("bpW", Preconditions.checkNotNull(DimensionType.getKey(getWorld())).toString());
         if (getEdge() != null) {
             tag.putString("bpE", getEdge().getName());
         }

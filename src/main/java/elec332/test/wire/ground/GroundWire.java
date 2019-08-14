@@ -22,7 +22,7 @@ import elec332.test.wire.AbstractWire;
 import elec332.test.wire.EnumWireType;
 import elec332.test.wire.WireColorHelper;
 import elec332.test.wire.WireData;
-import elec332.test.wire.ground.tile.ISubTileWire;
+import elec332.test.wire.ground.tile.IWireContainer;
 import elec332.test.wire.ground.tile.SubTileWire;
 import net.minecraft.block.state.BlockFaceShape;
 import net.minecraft.item.EnumDyeColor;
@@ -72,6 +72,7 @@ public class GroundWire {
     private VoxelShape shape, smallShape, extendedShape;
     private WireData wireDataBase;
     private boolean cChange;
+    private boolean isTerminal;
 
     private EnumBitSet<EnumFacing> connections;
     private Set<EnumFacing> connections_;
@@ -132,6 +133,14 @@ public class GroundWire {
         return getMaxWires(size);
     }
 
+    public void setIsTerminal(){
+        this.isTerminal = true;
+    }
+
+    public boolean isTerminalPart() {
+        return isTerminal;
+    }
+
     public boolean isCheckSide(EnumFacing facing) {
         return WireFacingHelper.isCheckSide(getPlacement(), WireFacingHelper.getRealSide(getPlacement(), facing)) || isOtherMachine(facing);
     }
@@ -157,7 +166,7 @@ public class GroundWire {
     }
 
     private boolean addColors(int otherSize, int wireData) {
-        if (otherSize != size) {
+        if (otherSize != size || isTerminal) {
             return false;
         }
         Set<EnumDyeColor> colors = Sets.newHashSet(WireColorHelper.getColors(wireData));
@@ -212,7 +221,7 @@ public class GroundWire {
         //return getBaseShape(getHorizontalConnections(), true, false);
     }
 
-    public void checkConnections(BlockPos pos_, World world, Function<BlockPos, Pair<Boolean, ISubTileWire>> wireGetter) {
+    public void checkConnections(BlockPos pos_, World world, Function<BlockPos, Pair<Boolean, IWireContainer>> wireGetter) {
         if (world.isRemote) {
             return;
         }
@@ -239,7 +248,7 @@ public class GroundWire {
                 BlockPos pos = pbf.getLeft();
                 EnumFacing otherPlacement = pbf.getRight();
                 if (WorldHelper.chunkLoaded(world, pos)) {
-                    Pair<Boolean, ISubTileWire> data = wireGetter.apply(pos);
+                    Pair<Boolean, IWireContainer> data = wireGetter.apply(pos);
                     if (data == null) {
                         continue;
                     }
@@ -282,7 +291,7 @@ public class GroundWire {
                     }
 
                     //System.out.println("Checking: " + iF + " " + cp + "  " + pos);
-                    ISubTileWire wireO = data.getRight();
+                    IWireContainer wireO = data.getRight();
                     if (wireO != null) {
                         GroundWire oWp = wireO.getWire(otherPlacement);
                         //not i > 0, as we use all 32 bits, so the number can be negative, as the last bit is the negativity bit
@@ -434,7 +443,7 @@ public class GroundWire {
         List<VoxelShape> parts = Lists.newArrayList();
         float width = Integer.bitCount(colors) * size;
         float stuff = ((16 - width) / 2) / 16;
-        if (connections.size() != 1 && !WireFacingHelper.isStraightLine(connections) || forceMiddle || onlySmallMiddle) {
+        if (!isTerminalPart() && (connections.size() != 1 && !WireFacingHelper.isStraightLine(connections) || forceMiddle || onlySmallMiddle)) {
             float stuff_ = stuff;
             if (!onlySmallMiddle) {
                 stuff_ -= 1 / 16f;

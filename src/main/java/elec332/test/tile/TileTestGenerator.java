@@ -44,7 +44,7 @@ public class TileTestGenerator extends AbstractEnergyObjectTile implements IEner
         inventory = new BasicItemHandler(1) {
 
             @Override
-            public boolean isStackValidForSlot(int slot, @Nonnull ItemStack stack) {
+            public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
                 return TileEntityFurnace.isItemFuel(stack);
             }
 
@@ -153,7 +153,7 @@ public class TileTestGenerator extends AbstractEnergyObjectTile implements IEner
 
         });
         window.addPlayerInventoryToContainer();
-        window.addWidget(new WidgetEnumChange<>(2, 2, 30, 30, EnumElectricityType.class).onValueChanged(type::set));
+        window.addWidget(new WidgetEnumChange<>(2, 2, 30, 30, EnumElectricityType.class).onValueChanged(type::set)).setEnum(type.get());
     }
 
     public boolean isActive() {

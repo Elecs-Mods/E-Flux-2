@@ -1,5 +1,6 @@
 package elec332.test.wire.terminal.tile;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import elec332.core.ElecCore;
@@ -15,6 +16,8 @@ import elec332.test.api.electricity.IEnergyObject;
 import elec332.test.api.electricity.component.EnumElectricityType;
 import elec332.test.api.util.ConnectionPoint;
 import elec332.test.tile.SubTileLogicBase;
+import elec332.test.wire.ground.GroundWire;
+import elec332.test.wire.ground.tile.IWireContainer;
 import elec332.test.wire.overhead.OverheadWireHandler;
 import elec332.test.wire.terminal.GroundTerminal;
 import net.minecraft.block.Block;
@@ -34,17 +37,14 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static net.minecraft.block.Block.spawnAsEntity;
 
 /**
  * Created by Elec332 on 20-2-2018
  */
-public class SubTileTerminal extends SubTileLogicBase implements ISubTileTerminal, IElectricityDevice, IEnergyObject {
+public class SubTileTerminal extends SubTileLogicBase implements ISubTileTerminal, IElectricityDevice, IEnergyObject, IWireContainer {
 
     public SubTileTerminal(SubTileLogicBase.Data data) {
         super(data);
@@ -52,6 +52,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     }
 
     private final List<GroundTerminal> terminals;
+    private BitSet bcfs = new BitSet(EnumFacing.values().length);
 
     @Override
     public boolean addTerminal(GroundTerminal terminal) {
@@ -61,6 +62,9 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
             return false;
         }
         terminals.add(terminal);
+        if (terminal.getSize() > 2){
+            bcfs.set(terminal.getSide().ordinal());
+        }
         sendPacket(1, writeToNBT(new NBTTagCompound()));
         notifyNeighborsOfChangeExtensively(true);
         return true;
@@ -99,12 +103,6 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
         return null;
     }
 
-    @Nullable
-    @Override
-    public GroundTerminal getTerminal(EnumFacing facing) {
-        return null;
-    }
-
     @Override
     public Collection<GroundTerminal> getTerminalView() {
         return terminals;
@@ -113,12 +111,9 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     @Override
     public void onLoad() {
         if (!getWorld().isRemote()) {
-            ElecCore.tickHandler.registerCall(new Runnable() {
-                @Override
-                public void run() {
-                    terminals.forEach(t -> t.checkConnectionPoint(getWorld(), getPos()));
-                }
-            }, getWorld());
+            ElecCore.tickHandler.registerCall(() ->
+                    terminals.forEach(t -> t.checkConnectionPoint(getWorld(), getPos())), getWorld()
+            );
         }
     }
 
@@ -126,10 +121,14 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     public void readFromNBT(NBTTagCompound compound) {
         NBTTagList list = compound.getList("terminals", NBTTypes.COMPOUND.getID());
         terminals.clear();
+        bcfs.clear();
         for (int i = 0; i < list.size(); i++) {
             NBTTagCompound tag = list.getCompound(i);
             GroundTerminal terminal = GroundTerminal.read(tag);
             terminals.add(terminal);
+            if (terminal.getSize() > 2){
+                bcfs.set(terminal.getSide().ordinal());
+            }
             terminal.checkConnectionPoint(getWorld(), getPos());
         }
     }
@@ -146,6 +145,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     @Override
     public void onRemoved() {
         terminals.clear();
+        bcfs.clear();
         invalidate();
     }
 
@@ -178,10 +178,15 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
         return false;
     }
 
-    private void removeTerminals(Collection<GroundTerminal> terminal) {
-        if (terminal != null && !terminal.isEmpty()) {
-            terminal.forEach(terminals::remove);
-            terminal.forEach(t -> OverheadWireHandler.INSTANCE.remove(t.getConnectionPoint(), getWorld()));
+    private void removeTerminals(Collection<GroundTerminal> terminals) {
+        if (terminals != null && !terminals.isEmpty()) {
+            terminals.forEach(this.terminals::remove);
+            terminals.forEach(terminal -> {
+                if (terminal.getSize() > 2){
+                    bcfs.set(terminal.getSide().ordinal(), false);
+                }
+            });
+            terminals.forEach(t -> OverheadWireHandler.INSTANCE.remove(t.getConnectionPoint(), getWorld()));
             afterRemoval();
         }
     }
@@ -189,6 +194,9 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     private void removeTerminal(GroundTerminal terminal) {
         if (terminal != null) {
             terminals.remove(terminal);
+            if (terminal.getSize() > 2){
+                bcfs.set(terminal.getSide().ordinal(), false);
+            }
             OverheadWireHandler.INSTANCE.remove(terminal.getConnectionPoint(), getWorld());
             afterRemoval();
         }
@@ -249,6 +257,9 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     @Nonnull
     @Override //todo: Cache and invalidate
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable EnumFacing facing) {
+        if (cap == TestMod.WIRE_CAPABILITY){
+            return LazyOptional.of(() -> this).cast();
+        }
         return cap == TestModAPI.ELECTRICITY_CAP ? connections.cast() : TestMod.TERMINAL_CAPABILITY.orEmpty(cap, LazyOptional.of(() -> this));
     }
 
@@ -290,6 +301,34 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     @Override
     public boolean isPassiveConnector() {
         return true;
+    }
+
+    @Override
+    public boolean addWire(GroundWire wire) {
+        if (!wire.isTerminalPart() && bcfs.get(wire.getPlacement().ordinal())){
+            wire.setIsTerminal();
+            return WorldHelper.getTileAt(getWorld(), getPos()).getCapability(TestMod.WIRE_CAPABILITY)
+                    .map(wc -> wc.addWire(wire))
+                    .orElse(false);
+        }
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public GroundWire getWire(EnumFacing facing) {
+        return null;
+    }
+
+    @Nonnull
+    @Override
+    public List<GroundWire> getWireView() {
+        return ImmutableList.of();
+    }
+
+    @Override
+    public boolean isRealWireContainer() {
+        return false;
     }
 
 }

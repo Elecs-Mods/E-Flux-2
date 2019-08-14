@@ -59,7 +59,7 @@ public class TerminalRenderer {
         }
     }
 
-    public static void getTerminalQuads(List<BakedQuad> ret, EnumFacing side, Iterable<GroundTerminal> terminals, boolean item) {
+    public static void makeQuads(List<BakedQuad> ret, EnumFacing side, Iterable<GroundTerminal> terminals, boolean item) {
         //float[] f = {4, 16 / 3f, 8, 16};
 
         for (GroundTerminal gt : terminals) {

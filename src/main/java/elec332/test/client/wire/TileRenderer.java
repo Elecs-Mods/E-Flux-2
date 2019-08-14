@@ -28,9 +28,6 @@ import java.util.Random;
 @StaticLoad
 @OnlyIn(Dist.CLIENT)
 public class TileRenderer extends TileEntityRenderer<TileMultiObject> {
-    static {
-        RenderingRegistry.instance().registerLoader(new WireRenderer());
-    }
 
     @Override
     public void render(TileMultiObject tileEntityIn, double x_, double y_, double z_, float partialTicks, int destroyStage) {

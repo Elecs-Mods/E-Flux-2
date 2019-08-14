@@ -12,6 +12,7 @@ import elec332.test.TestMod;
 import elec332.test.api.TestModAPI;
 import elec332.test.api.electricity.IElectricityDevice;
 import elec332.test.api.electricity.IEnergyObject;
+import elec332.test.tile.ISubTileLogic;
 import elec332.test.tile.SubTileLogicBase;
 import elec332.test.wire.WireColorHelper;
 import elec332.test.wire.ground.GroundWire;
@@ -48,7 +49,7 @@ import static net.minecraft.block.Block.spawnAsEntity;
 /**
  * Created by Elec332 on 1-2-2019
  */
-public class SubTileWire extends SubTileLogicBase implements ISubTileWire, IElectricityDevice {
+public class SubTileWire extends SubTileLogicBase implements ISubTileLogic, IWireContainer, IElectricityDevice {
 
     public SubTileWire(Data data) {
         super(data);
@@ -65,7 +66,7 @@ public class SubTileWire extends SubTileLogicBase implements ISubTileWire, IElec
     private boolean hadFirstLoad = false; //Packet saving measure
     private boolean blockPackets = false; //Packet saving measure
     private boolean noWires = false; // Connection checking reduction
-    private Map<BlockPos, LazyOptional<ISubTileWire>> otherWires = Maps.newHashMap();
+    private Map<BlockPos, LazyOptional<IWireContainer>> otherWires = Maps.newHashMap();
 
     @Override
     public boolean canBeRemoved() {
@@ -83,7 +84,7 @@ public class SubTileWire extends SubTileLogicBase implements ISubTileWire, IElec
         }
         boolean added = false;
         if (wireView.isEmpty() || getWire(wire.getPlacement()) == null) {
-            if (notify && VoxelShapes.compare(WorldHelper.getBlockState(getWorld(), getPos()).getShape(getWorld(), getPos()), wire.getShape(), IBooleanFunction.AND)) {
+            if (!wire.isTerminalPart() && notify && VoxelShapes.compare(WorldHelper.getBlockState(getWorld(), getPos()).getShape(getWorld(), getPos()), wire.getShape(), IBooleanFunction.AND)) {
                 return false;
             }
             wires.add(wire);
@@ -286,15 +287,15 @@ public class SubTileWire extends SubTileLogicBase implements ISubTileWire, IElec
         }
         checkingWires = true;
 
-        Function<BlockPos, Pair<Boolean, ISubTileWire>> func = new Function<BlockPos, Pair<Boolean, ISubTileWire>>() {
+        Function<BlockPos, Pair<Boolean, IWireContainer>> func = new Function<BlockPos, Pair<Boolean, IWireContainer>>() {
 
             private Map<BlockPos, Boolean> prevData = Maps.newHashMap();
 
             //If multiple calls are made for the same location, but the old cap has become invalid,
             //the return value will indicate it hasn't invalidated (except for the first one), resulting in false results.
             @Override
-            public Pair<Boolean, ISubTileWire> apply(BlockPos pos) {
-                Pair<Boolean, ISubTileWire> ret = getWire(pos);
+            public Pair<Boolean, IWireContainer> apply(BlockPos pos) {
+                Pair<Boolean, IWireContainer> ret = getWire(pos);
                 if (ret == null) {
                     return null;
                 }
@@ -444,8 +445,8 @@ public class SubTileWire extends SubTileLogicBase implements ISubTileWire, IElec
         getWorld().notifyBlockUpdate(getPos(), state, state, 1);
     }
 
-    private Pair<Boolean, ISubTileWire> getWire(BlockPos pos) {
-        LazyOptional<ISubTileWire> w = otherWires.get(pos);
+    private Pair<Boolean, IWireContainer> getWire(BlockPos pos) {
+        LazyOptional<IWireContainer> w = otherWires.get(pos);
         if (w == null || !w.isPresent()) {
             otherWires.remove(pos);
             TileEntity tile = WorldHelper.getTileAt(getWorld(), pos);
@@ -464,7 +465,7 @@ public class SubTileWire extends SubTileLogicBase implements ISubTileWire, IElec
         return Pair.of(true, w.orElseThrow(NullPointerException::new));
     }
 
-    private LazyOptional<ISubTileWire> myWire = LazyOptional.of(() -> this);
+    private LazyOptional<IWireContainer> myWire = LazyOptional.of(() -> this);
     private LazyOptional<IElectricityDevice> wireRes = LazyOptional.of(() -> this);
     private Set<IEnergyObject> internalWires = Sets.newHashSet();
 

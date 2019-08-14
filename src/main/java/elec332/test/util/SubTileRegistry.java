@@ -3,11 +3,11 @@ package elec332.test.util;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import elec332.test.tile.ISubTileLogic;
 import elec332.test.tile.SubTileLogicBase;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.property.IUnlistedProperty;
 import net.minecraftforge.common.util.LazyOptional;
 
 import javax.annotation.Nonnull;
@@ -28,10 +28,10 @@ public enum SubTileRegistry {
     private final Map<Class<? extends SubTileLogicBase>, ResourceLocation> registryInverse = Maps.newHashMap();
     private final Map<ResourceLocation, Function<SubTileLogicBase.Data, SubTileLogicBase>> constructors = Maps.newHashMap();
     private final Map<Capability, Function<List<?>, ?>> capCombiners = Maps.newHashMap();
-    private final Map<Class<? extends SubTileLogicBase>, List<IUnlistedProperty>> properties = Maps.newHashMap();
+    private final Set<Capability> cacheables = Sets.newHashSet();
 
     @SuppressWarnings("all")
-    public void registerSubTile(@Nonnull Class<? extends ISubTileLogic> clazz, @Nonnull ResourceLocation name, IUnlistedProperty... properties) {
+    public void registerSubTile(@Nonnull Class<? extends ISubTileLogic> clazz, @Nonnull ResourceLocation name) {
         if (!SubTileLogicBase.class.isAssignableFrom(clazz)) {
             throw new IllegalArgumentException();
         }
@@ -50,7 +50,6 @@ public enum SubTileRegistry {
             });
             registry.put(name, (Class<? extends SubTileLogicBase>) clazz);
             registryInverse.put((Class<? extends SubTileLogicBase>) clazz, name);
-            this.properties.put((Class<? extends SubTileLogicBase>) clazz, Lists.newArrayList(properties));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -83,15 +82,28 @@ public enum SubTileRegistry {
         return Preconditions.checkNotNull(registryInverse.get(clazz));
     }
 
-    @Nonnull
-    @SuppressWarnings("all")
-    public Set<IUnlistedProperty> getPropertiesFor(Class<? extends ISubTileLogic>... tiles) {
-        return Arrays.stream(tiles)
-                .map(properties::get)
-                .filter(Objects::nonNull)
-                .flatMap(List::stream)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
+    public void setCapabilityCacheable(Capability<?> cap){
+        cacheables.add(cap);
+    }
+
+    public boolean isCacheable(Capability<?> cap){
+        return cacheables.contains(cap);
+    }
+
+    public <T> void registerCapabilityInstanceCombiner(@Nonnull Capability<T> capability, Function<List<T>, T> combiner) {
+        SubTileRegistry.INSTANCE.registerCapabilityCombiner(capability, lazyOptionals -> {
+            List<T> objects = Lists.newArrayList();
+            lazyOptionals.forEach(c -> {
+                if (!c.isPresent()) {
+                    throw new RuntimeException();
+                }
+                objects.add(c.orElseThrow(NullPointerException::new));
+            });
+            final T r = combiner.apply(objects);
+            LazyOptional<T> ret = LazyOptional.of(() -> r);
+            lazyOptionals.forEach(lo -> lo.addListener(lo2 -> ret.invalidate()));
+            return ret;
+        });
     }
 
     @SuppressWarnings("unchecked")

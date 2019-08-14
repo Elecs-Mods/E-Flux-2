@@ -110,7 +110,7 @@ public class ItemGroundTerminal extends ItemSubTile implements INoJsonItem {
     @Override
     @OnlyIn(Dist.CLIENT)
     public IBakedModel getItemModel(ItemStack itemStack, World world, EntityLivingBase entityLivingBase) {
-        return TestMod.terminalModel;
+        return TestMod.model;
     }
 
     @Override

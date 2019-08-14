@@ -77,7 +77,6 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
                 break;
             }
         }
-        System.out.println(" Weeeee");
         networkhandler.sendToAll(1, wire.serialize());
     }
 
@@ -195,7 +194,6 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
 
     @Override
     public void load(ISaveHandler saveHandler, WorldInfo info, NBTTagCompound tag) {
-        System.out.println(" LOAD");
         NBTTagList list = tag.getList("wireMap", NBTTypes.COMPOUND.getID());
         for (int i = 0; i < list.size(); i++) {
             NBTTagCompound data = list.getCompound(i);
@@ -203,7 +201,6 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
             if (wire.getPosts() != 2) {
                 throw new IllegalArgumentException(); //...
             }
-            System.out.println(" addObjectUnsafe " + wire);
             for (int j = 0; j < 2; j++) {
                 ConnectionPoint cp = wire.getConnectionPoint(j);
                 wireMap.getOrCreate(cp.getWorld()).put(wire, cp.getPos());
@@ -213,7 +210,6 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
 
     @Override
     public NBTTagCompound save(ISaveHandler saveHandler, WorldInfo info) {
-        System.out.println(" SAVE");
         NBTTagCompound ret = new NBTTagCompound();
         NBTTagList list = new NBTTagList();
         wireMap.getValues().stream()
@@ -226,7 +222,6 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
 
     @Override
     public void nullifyData() {
-        System.out.println(" NULLIFY");
         wireMap.clear();
     }
 

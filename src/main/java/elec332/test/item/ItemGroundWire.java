@@ -10,7 +10,7 @@ import elec332.core.util.PlayerHelper;
 import elec332.test.TestMod;
 import elec332.test.wire.WireColorHelper;
 import elec332.test.wire.ground.GroundWire;
-import elec332.test.wire.ground.tile.ISubTileWire;
+import elec332.test.wire.ground.tile.IWireContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.renderer.model.IBakedModel;
 import net.minecraft.client.util.ITooltipFlag;
@@ -78,7 +78,7 @@ public class ItemGroundWire extends ItemSubTile implements INoJsonItem {
     public void afterBlockPlaced(@Nonnull BlockItemUseContext context, @Nonnull IBlockState state, TileEntity tile) {
         if (!context.getWorld().isRemote) {
             GroundWire wp = createWirePart(context.getPlayer(), context.getItem(), context.getFace().getOpposite());
-            ISubTileWire wireHandler = tile.getCapability(TestMod.WIRE_CAPABILITY).orElse(null);
+            IWireContainer wireHandler = tile.getCapability(TestMod.WIRE_CAPABILITY).orElse(null);
             if (wireHandler != null && wp != null) {
                 wireHandler.addWire(wp);
             }
@@ -110,7 +110,7 @@ public class ItemGroundWire extends ItemSubTile implements INoJsonItem {
 
     @Override
     public void onEmptySolidSideClicked(TileEntity tile, @Nonnull EnumFacing hit, EntityPlayer player, ItemStack stack, IBlockState state, Vec3d hitVec) {
-        ISubTileWire wireHandler = tile.getCapability(TestMod.WIRE_CAPABILITY, null).orElse(null);
+        IWireContainer wireHandler = tile.getCapability(TestMod.WIRE_CAPABILITY, null).orElse(null);
         if (wireHandler != null && wireHandler.getWire(hit) == null) {
             GroundWire wire = createWirePart(player, stack, hit);
             if (wireHandler.addWire(wire) && !PlayerHelper.isPlayerInCreative(player)) {

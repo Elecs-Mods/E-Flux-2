@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
 /**
  * Created by Elec332 on 20-2-2018
  */
-@HasSpecialRenderer(TileRenderer.class)
 @RegisteredTileEntity("hkuygsdafkjbdskfjbg")
 public class TileMultiObject extends AbstractTileEntity {
 
@@ -56,10 +55,12 @@ public class TileMultiObject extends AbstractTileEntity {
 
     public TileMultiObject() {
         subtiles = Lists.newArrayList();
+        cachedCaps = Maps.newHashMap();
     }
 
     private final List<SubTileLogicBase> subtiles;
     private final Cache<List<VoxelShape>, VoxelShape> shapeMemory = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build();
+    private final Map<Capability<?>, LazyOptional<?>> cachedCaps;
     private long worldTime;
     private Set<BlockPos> posSet = Sets.newHashSet();
     private Map<Integer, NBTTagCompound> packetCatcher;
@@ -121,8 +122,10 @@ public class TileMultiObject extends AbstractTileEntity {
     }
 
     public void onRemoved() {
+        cachedCaps.clear();
         subtiles.forEach(ISubTileLogic::onRemoved);
         subtiles.stream().filter(stl -> !stl.canBeRemoved()).forEach(ISubTileLogic::invalidate);
+        cachedCaps.clear(); //You never know what sub-tile may do...
         if (!subtiles.stream().allMatch(ISubTileLogic::canBeRemoved)) {
             throw new RuntimeException();
         }
@@ -134,6 +137,7 @@ public class TileMultiObject extends AbstractTileEntity {
         packetCatcher = Maps.newHashMap();
         if (hit != null && hit.getLeft().removedByPlayer(player, willHarvest, hit.getRight()) && subtiles.stream().allMatch(ISubTileLogic::canBeRemoved)) {
             world.setBlockState(pos, fluid.getBlockState(), world.isRemote ? 11 : 3);
+            cachedCaps.clear();
             packetCatcher = null;
             return true;
         }
@@ -204,6 +208,7 @@ public class TileMultiObject extends AbstractTileEntity {
     @Override
     public void remove() {
         subtiles.forEach(SubTileLogicBase::invalidate);
+        cachedCaps.clear();
     }
 
     @Override
@@ -230,9 +235,21 @@ public class TileMultiObject extends AbstractTileEntity {
     @Override
     @SuppressWarnings("all")
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
+        boolean c = SubTileRegistry.INSTANCE.isCacheable(capability);
+        LazyOptional<?> ret;
+        if (c){
+            ret = cachedCaps.get(capability);
+            if (ret != null && ret.isPresent()){
+                return ret.cast();
+            }
+        }
         List<LazyOptional<T>> capabilities = Lists.newArrayList(super.getCapability(capability, facing));
         subtiles.forEach(s -> capabilities.add(s.getCapability(capability, facing)));
-        return SubTileRegistry.INSTANCE.getCombined(capability, capabilities);
+        ret = SubTileRegistry.INSTANCE.getCombined(capability, capabilities);
+        if (c){
+            cachedCaps.put(capability, ret);
+        }
+        return ret.cast();
     }
 
     private static int getData(BlockPos pos) {

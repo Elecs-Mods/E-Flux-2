@@ -14,9 +14,6 @@ public interface ISubTileTerminal extends ISubTileLogic {
 
     public boolean addTerminal(GroundTerminal terminal);
 
-    @Nullable
-    public GroundTerminal getTerminal(EnumFacing facing);
-
     public Collection<GroundTerminal> getTerminalView();
 
 }

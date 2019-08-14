@@ -1,11 +1,13 @@
 package elec332.test.client.wire;
 
+import elec332.core.api.annotations.StaticLoad;
 import elec332.core.api.client.IIconRegistrar;
 import elec332.core.api.client.model.IElecModelBakery;
 import elec332.core.api.client.model.IElecQuadBakery;
 import elec332.core.api.client.model.IElecTemplateBakery;
 import elec332.core.api.client.model.IModelAndTextureLoader;
 import elec332.core.client.RenderHelper;
+import elec332.core.loader.client.RenderingRegistry;
 import elec332.test.api.electricity.component.EnumElectricityType;
 import elec332.test.util.TestModResourceLocation;
 import elec332.test.util.WireFacingHelper;
@@ -26,7 +28,12 @@ import java.util.Set;
 /**
  * Created by Elec332 on 3-2-2019
  */
+@StaticLoad
 public class WireRenderer implements IModelAndTextureLoader {
+
+    static {
+        RenderingRegistry.instance().registerLoader(new WireRenderer());
+    }
 
     private static TextureAtlasSprite black;
     private static IElecQuadBakery quadBakery;
