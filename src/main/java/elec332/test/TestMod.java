@@ -65,6 +65,7 @@ public class TestMod {
 
     public static BlockTest block = (BlockTest) new BlockTest().setRegistryName(new TestModResourceLocation("testblock"));
     public static ItemGroup test = new ItemGroup("test") {
+
         @Override
         public ItemStack createIcon() {
             return new ItemStack(Items.APPLE);
@@ -103,7 +104,6 @@ public class TestMod {
                 refor(b2, itemRegister.getRegistry());
                 refor(b3, itemRegister.getRegistry());
                 System.out.println("regitem");
-                WailaRegistrar.INSTANCE.toString();
             }
 
             private void refor(Block block, IForgeRegistry<Item> reg) {
@@ -156,7 +156,7 @@ public class TestMod {
             {
                 wires = ImmutableList.copyOf(stw);
                 List<IWireContainer> l = stw.stream().filter(IWireContainer::isRealWireContainer).collect(Collectors.toList());
-                if (l.size() > 1){
+                if (l.size() > 1) {
                     throw new UnsupportedOperationException();
                 }
                 main = l.isEmpty() ? null : l.get(0);
@@ -168,8 +168,8 @@ public class TestMod {
 
             @Override
             public boolean addWire(GroundWire wire) {
-                for (IWireContainer wc : wires){
-                    if (wc.addWire(wire)){
+                for (IWireContainer wc : wires) {
+                    if (wc.addWire(wire)) {
                         return true;
                     }
                 }

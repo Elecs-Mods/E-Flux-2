@@ -82,11 +82,11 @@ public enum SubTileRegistry {
         return Preconditions.checkNotNull(registryInverse.get(clazz));
     }
 
-    public void setCapabilityCacheable(Capability<?> cap){
+    public void setCapabilityCacheable(Capability<?> cap) {
         cacheables.add(cap);
     }
 
-    public boolean isCacheable(Capability<?> cap){
+    public boolean isCacheable(Capability<?> cap) {
         return cacheables.contains(cap);
     }
 

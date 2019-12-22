@@ -237,16 +237,16 @@ public class TileMultiObject extends AbstractTileEntity {
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
         boolean c = SubTileRegistry.INSTANCE.isCacheable(capability);
         LazyOptional<?> ret;
-        if (c){
+        if (c) {
             ret = cachedCaps.get(capability);
-            if (ret != null && ret.isPresent()){
+            if (ret != null && ret.isPresent()) {
                 return ret.cast();
             }
         }
         List<LazyOptional<T>> capabilities = Lists.newArrayList(super.getCapability(capability, facing));
         subtiles.forEach(s -> capabilities.add(s.getCapability(capability, facing)));
         ret = SubTileRegistry.INSTANCE.getCombined(capability, capabilities);
-        if (c){
+        if (c) {
             cachedCaps.put(capability, ret);
         }
         return ret.cast();

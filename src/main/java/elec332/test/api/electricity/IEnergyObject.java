@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
  * Created by Elec332 on 12-11-2017.
  * <p>
  * * NOTE: All functions defined in this interface, and all functions in interfaces that are
- * superclassed by this interface can be called asynchronously!
+ * subclassed by this interface can be called asynchronously!
  */
 public interface IEnergyObject {
 

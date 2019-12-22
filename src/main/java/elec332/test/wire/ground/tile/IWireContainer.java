@@ -20,7 +20,7 @@ public interface IWireContainer {
     @Nonnull
     public List<GroundWire> getWireView();
 
-    default public boolean isRealWireContainer(){
+    default public boolean isRealWireContainer() {
         return true;
     }
 

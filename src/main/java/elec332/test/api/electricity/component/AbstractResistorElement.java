@@ -51,4 +51,5 @@ public abstract class AbstractResistorElement<T extends IEnergyObject> extends C
     public String toString() {
         return "ResistorElement: R=" + getResistance();
     }
+
 }

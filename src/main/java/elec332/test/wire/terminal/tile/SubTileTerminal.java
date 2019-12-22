@@ -62,7 +62,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
             return false;
         }
         terminals.add(terminal);
-        if (terminal.getSize() > 2){
+        if (terminal.getSize() > 2) {
             bcfs.set(terminal.getSide().ordinal());
         }
         sendPacket(1, writeToNBT(new NBTTagCompound()));
@@ -126,7 +126,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
             NBTTagCompound tag = list.getCompound(i);
             GroundTerminal terminal = GroundTerminal.read(tag);
             terminals.add(terminal);
-            if (terminal.getSize() > 2){
+            if (terminal.getSize() > 2) {
                 bcfs.set(terminal.getSide().ordinal());
             }
             terminal.checkConnectionPoint(getWorld(), getPos());
@@ -182,7 +182,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
         if (terminals != null && !terminals.isEmpty()) {
             terminals.forEach(this.terminals::remove);
             terminals.forEach(terminal -> {
-                if (terminal.getSize() > 2){
+                if (terminal.getSize() > 2) {
                     bcfs.set(terminal.getSide().ordinal(), false);
                 }
             });
@@ -194,7 +194,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     private void removeTerminal(GroundTerminal terminal) {
         if (terminal != null) {
             terminals.remove(terminal);
-            if (terminal.getSize() > 2){
+            if (terminal.getSize() > 2) {
                 bcfs.set(terminal.getSide().ordinal(), false);
             }
             OverheadWireHandler.INSTANCE.remove(terminal.getConnectionPoint(), getWorld());
@@ -257,7 +257,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
     @Nonnull
     @Override //todo: Cache and invalidate
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable EnumFacing facing) {
-        if (cap == TestMod.WIRE_CAPABILITY){
+        if (cap == TestMod.WIRE_CAPABILITY) {
             return LazyOptional.of(() -> this).cast();
         }
         return cap == TestModAPI.ELECTRICITY_CAP ? connections.cast() : TestMod.TERMINAL_CAPABILITY.orEmpty(cap, LazyOptional.of(() -> this));
@@ -305,7 +305,7 @@ public class SubTileTerminal extends SubTileLogicBase implements ISubTileTermina
 
     @Override
     public boolean addWire(GroundWire wire) {
-        if (!wire.isTerminalPart() && bcfs.get(wire.getPlacement().ordinal())){
+        if (!wire.isTerminalPart() && bcfs.get(wire.getPlacement().ordinal())) {
             wire.setIsTerminal();
             return WorldHelper.getTileAt(getWorld(), getPos()).getCapability(TestMod.WIRE_CAPABILITY)
                     .map(wc -> wc.addWire(wire))

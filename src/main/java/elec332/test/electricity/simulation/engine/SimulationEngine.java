@@ -58,6 +58,7 @@ public enum SimulationEngine {
     private void analyzeCircuit(final Circuit circuit, boolean threaded) {
         if (threaded) {
             new Thread("Circuit Analyzer: " + circuit.getId()) {
+
                 @Override
                 public void run() {
                     long time = System.nanoTime();

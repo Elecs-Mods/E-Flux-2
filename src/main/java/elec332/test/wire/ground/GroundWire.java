@@ -133,7 +133,7 @@ public class GroundWire {
         return getMaxWires(size);
     }
 
-    public void setIsTerminal(){
+    public void setIsTerminal() {
         this.isTerminal = true;
     }
 

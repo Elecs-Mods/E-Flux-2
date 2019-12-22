@@ -115,8 +115,21 @@ public class WireModelCache extends ModelCache<WireModelCache.WireRenderData> {
             this.terminals = ImmutableList.of();
         }
 
-        private WireRenderData(int i, EnumDyeColor color){
-            this.terminals = Lists.newArrayList(new GroundTerminal(EnumFacing.DOWN, i, new Vec3d(0.5, 0, 0.5), color));
+        private WireRenderData(int i, EnumDyeColor color) {
+            int q = color == null ? -1 : color.hashCode();
+            this.terminals = Lists.newArrayList(new GroundTerminal(EnumFacing.DOWN, i, new Vec3d(0.5, 0, 0.5), color) { //More RAM omnomming prevention
+
+                @Override
+                public boolean equals(Object obj) {
+                    return obj == this || (obj instanceof GroundTerminal && ((GroundTerminal) obj).getLocation().equals(getLocation()) && getColor() == ((GroundTerminal) obj).getColor() && getSize() == ((GroundTerminal) obj).getSize() && getSide() == ((GroundTerminal) obj).getSide());
+                }
+
+                @Override
+                public int hashCode() {
+                    return getLocation().hashCode() + 31 * q + 31 * (31 * i + getSide().ordinal());
+                }
+
+            });
             this.item = true;
             this.wires = ImmutableList.of();
         }
