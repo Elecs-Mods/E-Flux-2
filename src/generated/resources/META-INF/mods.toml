@@ -1,19 +1,20 @@
 modLoader="javafml"
 loaderVersion="[${loaderversion},)"
 issueTrackerURL="https://github.com/Elecs-Mods/E-Flux-2/issues"
+displayURL="https://github.com/Elecs-Mods/E-Flux-2"
 authors="Elec332"
 
 [[mods]]
 modId="eflux2"
 version="${version}"
-displayName="E-Flux 2"
-description="E-Flux 2"
+displayName="E-Flux2"
+description="TODO"
 
 [[dependencies.eflux2]]
-    modId="minecraft"
+    modId="eleccore"
     mandatory=true
-    versionRange="[${mcversion},)"
-    ordering="NONE"
+    versionRange="[2.1.44-Beta,)"
+    ordering="AFTER"
     side="BOTH"
 
 [[dependencies.eflux2]]
@@ -24,8 +25,8 @@ description="E-Flux 2"
     side="BOTH"
 
 [[dependencies.eflux2]]
-    modId="eleccore"
+    modId="minecraft"
     mandatory=true
-    versionRange="[${coreversion},)"
-    ordering="AFTER"
+    versionRange="[${mcversion},)"
+    ordering="NONE"
     side="BOTH"

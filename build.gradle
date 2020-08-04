@@ -1,146 +1,51 @@
-import com.google.common.base.Strings
-
-buildscript {
-    repositories {
-        jcenter()
-        mavenCentral()
-        maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-    }
-    dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
-    }
+plugins {
+    id "nl.elec332.gradle.minecraft.moddev" version "0.2.1-Beta"
+    id "nl.elec332.gradle.minecraft.modmaven" version "0.2.1-Beta"
 }
 
-apply plugin: 'net.minecraftforge.gradle'
-
-repositories {
-    maven {
-        name = "ModMaven"
-        url = "https://modmaven.k-4u.nl"
-    }
-    maven {
-        url "http://tehnut.info/maven"
-    }
-}
-
-ext.configFile = file "build.properties"
-
-configFile.withReader {
-    def prop = new Properties()
-    prop.load(it)
-    project.ext.config = new ConfigSlurper().parse prop
-    String build = System.getenv("BUILD_NUMBER")
-    boolean localBuild = Strings.isNullOrEmpty(build)
-
-    String temp = config.mod_version
-    String classifier = config.mod_classifier
-    classifier = Strings.isNullOrEmpty(classifier) ? "" : "-" + classifier
-    project.ext.modVersion = temp + "." + (localBuild ? "9999.custom" : build)
-    config.mod_version = "${config.minecraft_version}-" + temp + "." + (localBuild ? "localBuild" : build) + classifier
-}
-
-version = config.mod_version
 group = "nl.elec332.eflux2"
-archivesBaseName = "E-Flux2"
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
+modSettings {
+    modName = "E-Flux2"
+    modId = "eflux2"
+    basePackage = "elec332.eflux2"
 
-minecraft {
+    //addWailaMaven = true
+    fgTweaks = true
+}
 
-    accessTransformer = file 'src/main/resources/META-INF/accesstransformer.cfg'
-
-    mappings channel: 'snapshot', version: config.mappings
-
-    runs {
-        client {
-            workingDirectory project.file('run')
-            source sourceSets.main
+generateToml {
+    description = "TODO"
+    dependencies {
+        eleccore {
+            versionRange = "[${config.eleccore_version},)"
+            ordering = "AFTER"
         }
-
-        server {
-            workingDirectory project.file('run')
-            source sourceSets.main
-        }
-
-        data {
-            workingDirectory project.file('run')
-            args '--mod', 'elux2', '--all', '--output', file('src/generated/resources/')
-            source sourceSets.main
-        }
-
     }
-
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:' + config.minecraft_version + "-" + config.forge_version
-    compileOnly "mcp.mobius.waila:Hwyla:${config.WAILA_version}:api"
-    runtimeOnly fg.deobf("mcp.mobius.waila:Hwyla:${config.WAILA_version}")
-    if (project.hasProperty("multi")) {
-        compile project(":ElecCore")
+//    compileOnly "mcp.mobius.waila:Hwyla:${config.WAILA_version}:api"
+//    modRuntime "mcp.mobius.waila:Hwyla:${config.WAILA_version}"
+
+    if (findProject(":ElecCore") != null) {
+        mod (project(":ElecCore")) {
+            exclude group: "*"
+        }
     } else {
-        compile fg.deobf("nl.elec332.core:ElecCore:" + config.minecraft_version + "-" + config.eleccore_version)
+        mod "nl.elec332.core:eleccore:" + config.minecraft_version + "-" + config.eleccore_version
     }
 }
 
-processResources {
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", modVersion
-    inputs.property "mcversion", config.minecraft_version
+modMaven {
+    githubUrl = "https://github.com/Elecs-Mods/E-Flux-2"
+    forceLicense = false
 
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'META_INF/mods.toml'
-
-        // replace version and mcversion
-        expand 'version': modVersion, 'mcversion': config.minecraft_version, 'loaderversion': config.minecraft_version.replace('1.', '')
-        expand 'forgeversion': config.forge_version
-        expand 'coreversion': config.eleccore_version
-    }
-
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'META_INF/mods.toml'
-    }
-}
-
-//Maven magic
-task("uploadJars", dependsOn: "reobf") {
-    description = "uploads JARs"
-    if (System.getenv("local_maven") != null) {
-        apply plugin: 'maven'
-        uploadArchives {
-            repositories {
-                mavenDeployer {
-                    repository(url: "file://" + System.getenv("local_maven"))
-                    pom {
-                        groupId = project.group
-                        version = project.version
-                        artifactId = project.archivesBaseName
-                        project {
-                            name project.archivesBaseName
-                            packaging 'jar'
-                            description project.archivesBaseName
-                            issueManagement {
-                                system 'github'
-                                url 'https://github.com/Elecs-Mods/E-Flux-2/issues'
-                            }
-                            developers {
-                                developer {
-                                    id 'Elec332'
-                                    name 'Elec332'
-                                    roles {
-                                        role 'developer'
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+    developer {
+        id "Elec332"
+        name "Elec332"
+        roles {
+            role "developer"
         }
     }
 }

@@ -1,9 +1,9 @@
 package elec332.eflux2.client;
 
 import com.mojang.blaze3d.platform.GlStateManager;
+import elec332.core.client.ClientHelper;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.api.distmarker.Dist;
@@ -18,7 +18,9 @@ import java.awt.*;
 public class RenderFunctions {
 
     public static Vec3d getTranslationForRendering(Vec3d renderPos) {
-        return new Vec3d(renderPos.x - TileEntityRendererDispatcher.staticPlayerX, renderPos.y - TileEntityRendererDispatcher.staticPlayerY, renderPos.z - TileEntityRendererDispatcher.staticPlayerZ);
+        Vec3d offset = ClientHelper.getMinecraft().getRenderManager().info.getProjectedView();
+        //return new Vec3d(renderPos.x - TileEntityRendererDispatcher.staticPlayerX, renderPos.y - TileEntityRendererDispatcher.staticPlayerY, renderPos.z - TileEntityRendererDispatcher.staticPlayerZ);
+        return renderPos.subtract(offset);
     }
 
     @SuppressWarnings("all")

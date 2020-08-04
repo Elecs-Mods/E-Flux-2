@@ -10,7 +10,7 @@ import elec332.eflux2.api.electricity.component.EnumElectricityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -32,22 +32,20 @@ public class TileTestReceiver extends AbstractEnergyObjectTile implements IEnerg
         iInformation.addInformation("Amps: " + iInfoDataAccessorBlock.getData().getDouble("amps"));
     }
 
-    @Nonnull
     @Override
-    public CompoundNBT getInfoNBTData(@Nonnull CompoundNBT CompoundNBT, TileEntity tileEntity, @Nonnull ServerPlayerEntity ServerPlayerEntity, @Nonnull IInfoDataAccessorBlock iInfoDataAccessorBlock) {
-        CompoundNBT.putDouble("volts", voltage);
-        CompoundNBT.putDouble("amps", amps);
-        return CompoundNBT;
+    public void gatherInformation(@Nonnull CompoundNBT tag, @Nonnull ServerPlayerEntity player, @Nonnull IInfoDataAccessorBlock hitData) {
+        tag.putDouble("volts", voltage);
+        tag.putDouble("amps", amps);
     }
 
     @Override
-    public boolean onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+    public ActionResultType onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
         if (!player.world.isRemote() && hand == Hand.MAIN_HAND && player.getHeldItem(hand).isEmpty()) {
             PlayerHelper.sendMessageToPlayer(player, "A: " + amps);
             PlayerHelper.sendMessageToPlayer(player, "V: " + voltage);
             PlayerHelper.sendMessageToPlayer(player, " P: " + Math.abs(amps * voltage));
         }
-        return false;
+        return ActionResultType.PASS;
     }
 
     @Nonnull

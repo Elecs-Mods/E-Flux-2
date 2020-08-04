@@ -25,7 +25,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.FurnaceTileEntity;
 import net.minecraft.tileentity.ITickableTileEntity;
-import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -119,14 +119,14 @@ public class TileTestGenerator extends AbstractEnergyObjectTile implements IEner
     }
 
     @Override
-    public boolean onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+    public ActionResultType onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
         if (!player.world.isRemote() && hand == Hand.MAIN_HAND && player.getHeldItem(hand).isEmpty()) {
             PlayerHelper.sendMessageToPlayer(player, "A: " + rp);
             PlayerHelper.sendMessageToPlayer(player, "V: " + ef);
 
             PlayerHelper.sendMessageToPlayer(player, " P: " + Math.abs(rp * ef));
         }
-        return !player.isSneaking() || openTileGui(player);
+        return (!player.isSneaking() || openTileGui(player)) ? ActionResultType.SUCCESS : ActionResultType.PASS;
     }
 
     @Override
@@ -176,11 +176,9 @@ public class TileTestGenerator extends AbstractEnergyObjectTile implements IEner
         iInformation.addInformation("Active: " + active);
     }
 
-    @Nonnull
     @Override
-    public CompoundNBT getInfoNBTData(@Nonnull CompoundNBT tag, TileEntity tileEntity, @Nonnull ServerPlayerEntity ServerPlayerEntity, @Nonnull IInfoDataAccessorBlock iInfoDataAccessorBlock) {
+    public void gatherInformation(@Nonnull CompoundNBT tag, @Nonnull ServerPlayerEntity player, @Nonnull IInfoDataAccessorBlock hitData) {
         tag.putInt("volts", voltage);
-        return tag;
     }
 
     @Nonnull

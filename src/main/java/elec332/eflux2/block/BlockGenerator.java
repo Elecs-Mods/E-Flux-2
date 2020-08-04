@@ -7,7 +7,7 @@ import net.minecraft.particles.ParticleTypes;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.ILightReader;
 import net.minecraft.world.World;
 
 import java.util.Map;
@@ -23,7 +23,7 @@ public class BlockGenerator extends BlockTileEntity {
     }
 
     @Override
-    public void addAdditionalData(IEnviromentBlockReader world, BlockPos pos, Map<String, String> dataMap) {
+    public void addAdditionalData(ILightReader world, BlockPos pos, Map<String, String> dataMap) {
         TileEntity tile = WorldHelper.getTileAt(world, pos);
         if (tile instanceof TileTestGenerator && ((TileTestGenerator) tile).isActive()) {
             dataMap.put("activated", "true");

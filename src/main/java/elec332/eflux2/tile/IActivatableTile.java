@@ -1,6 +1,7 @@
 package elec332.eflux2.tile;
 
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockRayTraceResult;
 
@@ -9,8 +10,8 @@ import net.minecraft.util.math.BlockRayTraceResult;
  */
 public interface IActivatableTile {
 
-    public default boolean onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
-        return false;
+    public default ActionResultType onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+        return ActionResultType.PASS;
     }
 
 }

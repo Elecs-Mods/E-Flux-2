@@ -22,7 +22,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.ILightReader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.IModelData;
@@ -54,7 +54,7 @@ public class WireModelCache extends ModelCache<WireModelCache.WireRenderData> {
     }
 
     @Override
-    public void addModelData(@Nonnull IEnviromentBlockReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData) {
+    public void addModelData(@Nonnull ILightReader world, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull IModelData modelData) {
         TileEntity tile = WorldHelper.getTileAt(world, pos);
         modelData.setData(ModelProperties.WIRE, tile.getCapability(EFlux2.WIRE_CAPABILITY).orElseThrow(NullPointerException::new).getWireView());
         modelData.setData(ModelProperties.TERMINAL, tile.getCapability(EFlux2.TERMINAL_CAPABILITY).orElseThrow(NullPointerException::new).getTerminalView());
@@ -89,7 +89,6 @@ public class WireModelCache extends ModelCache<WireModelCache.WireRenderData> {
 
     public static class WireRenderData {
 
-        @SuppressWarnings("all")
         public WireRenderData(Collection<GroundWire> wires, Collection<GroundTerminal> terminals) {
             this.wires = Preconditions.checkNotNull(wires);
             this.item = false;

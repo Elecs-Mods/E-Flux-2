@@ -5,7 +5,7 @@ import net.minecraft.client.renderer.color.IBlockColor;
 import net.minecraft.client.renderer.color.IItemColor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
+import net.minecraft.world.ILightReader;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 public class TerminalColor implements IBlockColor, IItemColor {
 
     @Override
-    public int getColor(@Nonnull BlockState state, @Nullable IEnviromentBlockReader world, @Nullable BlockPos pos, int index) {
+    public int getColor(@Nonnull BlockState state, @Nullable ILightReader world, @Nullable BlockPos pos, int index) {
         return index;
     }
 

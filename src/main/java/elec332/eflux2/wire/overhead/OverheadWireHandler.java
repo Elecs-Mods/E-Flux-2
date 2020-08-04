@@ -3,9 +3,9 @@ package elec332.eflux2.wire.overhead;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import elec332.core.api.annotations.StaticLoad;
-import elec332.core.api.data.IExternalSaveHandler;
 import elec332.core.api.network.object.INetworkObjectHandler;
 import elec332.core.api.network.object.INetworkObjectSender;
+import elec332.core.api.storage.IExternalSaveHandler;
 import elec332.core.util.NBTTypes;
 import elec332.core.world.WorldHelper;
 import elec332.core.world.posmap.DefaultMultiWorldPositionedObjectHolder;
@@ -20,6 +20,7 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -45,7 +46,7 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
 
     INSTANCE;
 
-    private OverheadWireHandler() {
+    OverheadWireHandler() {
         wireMap = DefaultMultiWorldPositionedObjectHolder.createListed();
         loadedWires = HashMultimap.create();
         MinecraftForge.EVENT_BUS.register(this);
@@ -87,7 +88,7 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
         removeWire(wire);
     }
 
-    public void remove(BlockPos pos, IWorldReader world) {
+    public void remove(BlockPos pos, IWorld world) {
         if (world.isRemote()) {
             return;
         }
@@ -95,7 +96,7 @@ public enum OverheadWireHandler implements IExternalSaveHandler, INetworkObjectS
         wires.forEach(this::removeWire);
     }
 
-    public void remove(final ConnectionPoint cp, IWorldReader world) {
+    public void remove(final ConnectionPoint cp, IWorld world) {
         if (world.isRemote() || cp == null) {
             return;
         }

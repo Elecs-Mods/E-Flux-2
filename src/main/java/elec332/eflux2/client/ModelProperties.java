@@ -2,8 +2,6 @@ package elec332.eflux2.client;
 
 import elec332.eflux2.wire.ground.GroundWire;
 import elec332.eflux2.wire.terminal.GroundTerminal;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.IEnviromentBlockReader;
 import net.minecraftforge.client.model.data.ModelProperty;
 
 import java.util.Collection;

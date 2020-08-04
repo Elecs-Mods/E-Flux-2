@@ -13,7 +13,6 @@ import net.minecraft.nbt.IntNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.LogicalSide;
 
@@ -32,7 +31,8 @@ public class ConnectionPointHandler {
     public ConnectionPointHandler(Supplier<TileEntity> tile) {
         this.tile = tile;
         this.connections = Maps.newIdentityHashMap();
-        this.listeners = l -> {};
+        this.listeners = l -> {
+        };
         this.dataGetter = Object::toString;
         this.subIdMap = Lists.newArrayList();
     }
@@ -117,7 +117,7 @@ public class ConnectionPointHandler {
     public CompoundNBT save() {
         ListNBT list = new ListNBT();
         for (Integer i : subIdMap) {
-            list.add(new IntNBT(i));
+            list.add(IntNBT.valueOf(i));
         }
         CompoundNBT ret = new CompoundNBT();
         ret.put("sidm", list);

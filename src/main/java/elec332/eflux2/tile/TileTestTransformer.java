@@ -5,6 +5,7 @@ import elec332.core.util.PlayerHelper;
 import elec332.eflux2.api.electricity.component.EnumElectricityType;
 import elec332.eflux2.simulation.IElectricityTransformer;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.ActionResultType;
 import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -59,9 +60,9 @@ public class TileTestTransformer extends AbstractEnergyObjectTile implements IEl
     }
 
     @Override
-    public boolean onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
+    public ActionResultType onBlockActivated(PlayerEntity player, Hand hand, BlockRayTraceResult hit) {
         PlayerHelper.sendMessageToPlayer(player, connectionPointHandler.toString());
-        return true;
+        return ActionResultType.SUCCESS;
     }
 
 }

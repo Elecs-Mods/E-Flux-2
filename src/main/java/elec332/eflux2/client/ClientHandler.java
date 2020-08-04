@@ -1,5 +1,6 @@
 package elec332.eflux2.client;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.platform.GlStateManager;
 import elec332.core.ElecCore;
 import elec332.core.api.annotations.StaticLoad;
@@ -22,7 +23,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.DrawBlockHighlightEvent;
+import net.minecraftforge.client.event.DrawHighlightEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -61,18 +62,18 @@ public class ClientHandler {
     }
 
     @SubscribeEvent
-    public void onBlockHighlight(DrawBlockHighlightEvent event) {
+    public void onBlockHighlight(DrawHighlightEvent event) {
         ItemStack stack = Minecraft.getInstance().player.getHeldItem(Hand.MAIN_HAND);
         if (stack.getItem() != EFlux2ItemRegister.terminal) {
             return;
         }
         RayTraceResult hit_ = event.getTarget();
         World world = Minecraft.getInstance().world;
-        if (event.getSubID() == 0 && hit_ instanceof BlockRayTraceResult) {
+        if (hit_ instanceof BlockRayTraceResult) {
             BlockRayTraceResult hit = (BlockRayTraceResult) hit_;
             Direction side = hit.getFace();
             BlockPos pos = hit.getPos();
-            BlockState state = world.getBlockState(pos);
+            BlockState state = WorldHelper.getBlockState(world, pos);
             if (!state.isAir(world, pos) && GroundTerminal.canTerminalStay(world, pos.offset(side), side.getOpposite())) {
                 int size = ItemGroundTerminal.getDataFromStack(stack).getLeft();
                 Direction.Axis axis = side.getAxis();
@@ -84,10 +85,11 @@ public class ClientHandler {
                 }
                 VoxelShape shape = GroundTerminal.getShape(hitVec, size, side.getOpposite());
                 if (GroundTerminal.isWithinBounds(shape)) {
-                    GlStateManager.pushMatrix();
-                    GlStateManager.translated(side.getXOffset(), side.getYOffset(), side.getZOffset());
-                    RenderHelper.drawSelectionBox(event.getInfo().getRenderViewEntity(), world, pos, shape, event.getPartialTicks());
-                    GlStateManager.popMatrix();
+                    MatrixStack matrixStack = event.getMatrix();
+                    matrixStack.push();
+                    matrixStack.translate(side.getXOffset(), side.getYOffset(), side.getZOffset());
+                    RenderHelper.drawSelectionBox(world, pos, shape, event.getInfo().getProjectedView(), matrixStack, event.getBuffers());
+                    matrixStack.pop();
                 }
             }
         }

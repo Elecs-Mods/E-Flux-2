@@ -20,7 +20,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.shapes.IBooleanFunction;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.world.IWorldReader;
+import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.LazyOptional;
 
@@ -125,7 +125,7 @@ public class GroundTerminal {
         return canTerminalStay(world, pos, getSide());
     }
 
-    public void checkConnectionPoint(IWorldReader world, BlockPos myPos) {
+    public void checkConnectionPoint(IWorld world, BlockPos myPos) {
         if (world == null || world.isRemote()) {
             return;
         }
@@ -149,7 +149,7 @@ public class GroundTerminal {
         }
     }
 
-    private void setNewCP(ConnectionPoint newCP, IWorldReader world) {
+    private void setNewCP(ConnectionPoint newCP, IWorld world) {
         if (this.cp != null && !this.cp.equals(newCP)) {
             OverheadWireHandler.INSTANCE.remove(this.cp, world);
         }

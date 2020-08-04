@@ -18,10 +18,8 @@ import net.minecraft.client.renderer.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.item.DyeColor;
 import net.minecraft.util.Direction;
-import net.minecraftforge.common.model.ITransformation;
-import net.minecraftforge.common.model.TRSRTransformation;
+import net.minecraftforge.client.extensions.IForgeTransformationMatrix;
 
-import javax.vecmath.Matrix4f;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +43,7 @@ public class WireRenderer implements IModelAndTextureLoader {
             Direction ef = data.getPlacement();
             int x = ef.getAxis() == Direction.Axis.Z ? 180 - (90 * ef.getAxisDirection().getOffset()) : ef == Direction.UP ? 180 : 0;
             int z = ef.getAxis() == Direction.Axis.X ? 180 - (90 * ef.getAxisDirection().getOffset()) : 0;
-            ITransformation placementTransformation = RenderHelper.getTransformation(x, 0, z);
+            IForgeTransformationMatrix placementTransformation = RenderHelper.getTransformation(x, 0, z);
             List<DyeColor> colors = WireColorHelper.getColors(data.getColorBits());
             Set<Direction> conn = data.getHorizontalConnections();
             float posStart;
@@ -63,8 +61,8 @@ public class WireRenderer implements IModelAndTextureLoader {
                 int eight16 = neg ? (exnp ? 8 + size : 8) : (shrt ? 16 - size : 16);
                 int extStart = exnp ? -size : shrt ? size : 0;
                 posStart = ft + 1;
-                ITransformation baseTransformation = RenderHelper.getDefaultRotationFromFacing(facing);
-                ITransformation placedBaseTransformation = merge(baseTransformation, placementTransformation);
+                IForgeTransformationMatrix baseTransformation = RenderHelper.getDefaultRotationFromFacing(facing).getRotation();
+                IForgeTransformationMatrix placedBaseTransformation = RenderHelper.merge(baseTransformation, placementTransformation);
                 for (int i = 0; i < colors.size(); i++) {
                     boolean extraNeg = ef == Direction.UP && facing.getAxis() == Direction.Axis.X;
                     extraNeg |= ef == Direction.EAST && facing.getAxis() == Direction.Axis.Z;
@@ -72,8 +70,8 @@ public class WireRenderer implements IModelAndTextureLoader {
                     DyeColor color = colors.get((extraNeg != neg) ? i : colors.size() - 1 - i);
                     TextureAtlasSprite wire = wireTypes[0];
                     if (i == 0) { //side
-                        ITransformation i0T = merge(RenderHelper.getTransformation(0, 0, 90), baseTransformation);
-                        quads.add(quadBakery.bakeQuad(new Vector3f(size, 16 - posStart, 8), new Vector3f(0, 16 - posStart, extStart), wire, Direction.UP, merge(i0T, placementTransformation), color.ordinal() + 1, eight16, color.ordinal(), zero8));
+                        IForgeTransformationMatrix i0T = RenderHelper.merge(RenderHelper.getTransformation(0, 0, 90), baseTransformation);
+                        quads.add(quadBakery.bakeQuad(new Vector3f(size, 16 - posStart, 8), new Vector3f(0, 16 - posStart, extStart), wire, Direction.UP, RenderHelper.merge(i0T, placementTransformation), color.ordinal() + 1, eight16, color.ordinal(), zero8));
                     }
                     if (conn.size() == 1 || item) { //end cap
                         quads.add(quadBakery.bakeQuad(new Vector3f(posStart, 0, 0), new Vector3f(posStart + size, size, item ? 16 : 8), wire, Direction.SOUTH, placedBaseTransformation, color.ordinal(), 0.0F, color.ordinal() + 1, 2.0F));
@@ -86,8 +84,8 @@ public class WireRenderer implements IModelAndTextureLoader {
                     }
                     posStart += size;
                     if (i == colors.size() - 1) { //other side
-                        ITransformation iCt = merge(RenderHelper.getTransformation(0, 180, 90), baseTransformation);
-                        quads.add(quadBakery.bakeQuad(new Vector3f(size, posStart, 16 - extStart), new Vector3f(0, posStart, 8), wire, Direction.UP, merge(iCt, placementTransformation), color.ordinal() + 1, eight16, color.ordinal(), zero8));
+                        IForgeTransformationMatrix iCt = RenderHelper.merge(RenderHelper.getTransformation(0, 180, 90), baseTransformation);
+                        quads.add(quadBakery.bakeQuad(new Vector3f(size, posStart, 16 - extStart), new Vector3f(0, posStart, 8), wire, Direction.UP, RenderHelper.merge(iCt, placementTransformation), color.ordinal() + 1, eight16, color.ordinal(), zero8));
                     }
                 }
                 if (change && !item) {
@@ -110,17 +108,11 @@ public class WireRenderer implements IModelAndTextureLoader {
                 quads.add(quadBakery.bakeQuad(new Vector3f(ft, 1.1f * size, ft), new Vector3f(16 - ft, 1.1f * size, 16 - ft), black, Direction.UP, placementTransformation));
                 for (Direction facing : Direction.values()) {
                     if (facing.getAxis() != Direction.Axis.Y) {
-                        quads.add(quadBakery.bakeQuad(new Vector3f(ft, 0, ft), new Vector3f(16 - ft, 1.1f * size, ft), black, Direction.NORTH, merge(RenderHelper.getDefaultRotationFromFacing(facing), placementTransformation)));
+                        quads.add(quadBakery.bakeQuad(new Vector3f(ft, 0, ft), new Vector3f(16 - ft, 1.1f * size, ft), black, Direction.NORTH, RenderHelper.merge(RenderHelper.getDefaultRotationFromFacing(facing), placementTransformation)));
                     }
                 }
             }
         }
-    }
-
-    private static ITransformation merge(ITransformation first, ITransformation second) {
-        Matrix4f m = new Matrix4f(second.getMatrixVec());
-        m.mul(first.getMatrixVec());
-        return new TRSRTransformation(m);
     }
 
     @Override
