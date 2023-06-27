@@ -1,5 +1,6 @@
 package elec332.eflux2.electricity.simulation.engine;
 
+import com.google.common.base.Preconditions;
 import elec332.eflux2.api.electricity.component.CircuitElement;
 import elec332.eflux2.api.electricity.component.ICircuitPart;
 import elec332.eflux2.api.electricity.component.IElementChecker;
@@ -9,10 +10,11 @@ import elec332.eflux2.electricity.simulation.CircuitElementFactory;
 import elec332.eflux2.simulation.voltsource.VoltageElement;
 import org.apache.commons.lang3.tuple.Pair;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-@SuppressWarnings("all")
+@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 public enum SimulationEngine {
 
     INSTANCE;
@@ -25,6 +27,7 @@ public enum SimulationEngine {
     }
 
     public void tick(Circuit circuit) {
+        Preconditions.checkNotNull(circuit);
         long time = System.nanoTime();
         synchronized (circuit) {
             try {
@@ -55,6 +58,7 @@ public enum SimulationEngine {
         return false;
     }
 
+    @SuppressWarnings("all")
     private void analyzeCircuit(final Circuit circuit, boolean threaded) {
         if (threaded) {
             new Thread("Circuit Analyzer: " + circuit.getId()) {
@@ -91,7 +95,7 @@ public enum SimulationEngine {
             int i, j;
             int vscount = 0;
             circuit.nodeList = new Vector<>();
-            CircuitElement volt = null;
+            CircuitElement<?> volt = null;
             if (elmList.isEmpty()) {
                 circuit.rebuilding = false;
                 return;  //ez
@@ -100,7 +104,7 @@ public enum SimulationEngine {
             //System.out.println("ac1");
             // look for voltage element
             for (i = 0; i != elmList.size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = circuit.getElm(i);
                 if (ce instanceof VoltageElement) {
                     volt = ce;
                     break;
@@ -109,6 +113,8 @@ public enum SimulationEngine {
 
             // if no ground, and no rails, then the voltage elm's first terminal
             // is ground
+
+            //noinspection IfStatementWithIdenticalBranches
             if (volt != null) {
                 CircuitNode cn = new CircuitNode();
                 ConnectionPoint pt = volt.getPost(0);
@@ -124,7 +130,7 @@ public enum SimulationEngine {
 
             // allocate nodes and voltage sources
             for (i = 0; i != elmList.size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                 int inodes = ce.getInternalNodeCount();
                 int ivs = ce.getVoltageSourceCount();
                 int posts = ce.getPostCount();
@@ -134,7 +140,7 @@ public enum SimulationEngine {
                     ConnectionPoint pt = ce.getPost(j);
                     int k;
                     for (k = 0; k != circuit.nodeList.size(); k++) {
-                        CircuitNode cn = circuit.getCircuitNode(k);
+                        CircuitNode cn = Preconditions.checkNotNull(circuit.getCircuitNode(k));
                         if (pt.equals(cn.cp)) {
                             break;
                         }
@@ -149,7 +155,7 @@ public enum SimulationEngine {
                         ce.setNode(j, circuit.nodeList.size());
                         circuit.nodeList.addElement(cn);
                     } else {
-                        circuit.getCircuitNode(k).links.addElement(cnl);
+                        Preconditions.checkNotNull(circuit.getCircuitNode(k)).links.addElement(cnl);
                         ce.setNode(j, k);
                         // if it's the ground node, make sure the node voltage is 0,
                         // cause it may not get set later
@@ -178,7 +184,7 @@ public enum SimulationEngine {
 
             // determine if circuit is nonlinear
             for (i = 0; i != elmList.size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                 if (ce.nonLinear()) {
                     circuit.circuitNonLinear = true;
                 }
@@ -206,19 +212,19 @@ public enum SimulationEngine {
 
             // stamp linear circuit simulation
             for (i = 0; i != elmList.size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                 ce.stamp();
             }
             //System.out.println("ac4");
 
             // determine nodes that are unconnected
-            boolean closure[] = new boolean[circuit.nodeList.size()];
+            boolean[] closure = new boolean[circuit.nodeList.size()];
             boolean changed = true;
             closure[0] = true;
             while (changed) {
                 changed = false;
                 for (i = 0; i != elmList.size(); i++) {
-                    CircuitElement ce = circuit.getElm(i);
+                    CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                     // loop through all ce's nodes to see if they are connected
                     // to other nodes not in closure
                     for (j = 0; j < ce.getPostCount(); j++) {
@@ -244,7 +250,7 @@ public enum SimulationEngine {
 
                 // connect unconnected nodes
                 for (i = 0; i != circuit.nodeList.size(); i++) {
-                    if (!closure[i] && !circuit.getCircuitNode(i).internal) {
+                    if (!closure[i] && !Preconditions.checkNotNull(circuit.getCircuitNode(i)).internal) {
                         //TODO: remove debug code
                         if (debug()) {
                             System.out.println("node " + i + " unconnected");
@@ -259,7 +265,7 @@ public enum SimulationEngine {
             //System.out.println("ac5");
 
             for (i = 0; i != elmList.size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                 // look for voltage source loops
                 if ((ce instanceof VoltageElement && ce.getPostCount() == 2) || ce.isWire()) {
                     FindPathInfo fpi = new FindPathInfo(FindPathInfo.VOLTAGE, ce, ce.getNode(1), circuit);
@@ -371,7 +377,7 @@ public enum SimulationEngine {
                     continue;
                 }
                 if (elt.type == RowInfo.ROW_EQUAL) {
-                    RowInfo e2 = null;
+                    RowInfo e2;
                     // resolve chains of equality; 100 max steps to avoid loops
                     for (j = 0; j != 100; j++) {
                         e2 = circuit.circuitRowInfo[elt.nodeEq];
@@ -405,8 +411,8 @@ public enum SimulationEngine {
 
             // make the new, simplified matrix
             int newsize = nn;
-            double newmatx[][] = new double[newsize][newsize];
-            double newrs[] = new double[newsize];
+            double[][] newmatx = new double[newsize][newsize];
+            double[] newrs = new double[newsize];
             int ii = 0;
             for (i = 0; i != matrixSize; i++) {
                 RowInfo rri = circuit.circuitRowInfo[i];
@@ -472,7 +478,7 @@ public enum SimulationEngine {
 
             int i, j, k, subiter;
             for (i = 0; i != elmList.size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                 ce.startIteration();
             }
             circuit.steps++;
@@ -491,7 +497,7 @@ public enum SimulationEngine {
                     }
                 }
                 for (i = 0; i != elmList.size(); i++) {
-                    CircuitElement ce = circuit.getElm(i);
+                    CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                     ce.doStep();
                 }
                 if (circuit.stopMessage != null) {
@@ -542,7 +548,7 @@ public enum SimulationEngine {
                         break;
                     }
                     if (j < circuit.nodeList.size() - 1) {
-                        CircuitNode cn = circuit.getCircuitNode(j + 1);
+                        CircuitNode cn = Preconditions.checkNotNull(circuit.getCircuitNode(j + 1));
                         for (k = 0; k != cn.links.size(); k++) {
                             CircuitNodeLink cnl = cn.links.elementAt(k);
                             cnl.elm.setNodeVoltage(cnl.num, res);
@@ -566,7 +572,7 @@ public enum SimulationEngine {
             }
         }
 
-        for (CircuitElement elm : elmList) {
+        for (CircuitElement<?> elm : elmList) {
             elm.preApply();
         }
         for (ICircuitPart cp : circuit.getCircuitParts()) {
@@ -576,24 +582,33 @@ public enum SimulationEngine {
                 }
             }
         }
-        for (Pair<Class, IElementChecker> p : CircuitElementFactory.INSTANCE.getElementCheckers()) {
-            if (!p.getRight().elementsValid(circuit.sortedElements.get(p.getLeft()))) {
-                return;
-            }
+        if (!elementsValid(circuit)) {
+            return;
         }
-        for (CircuitElement elm : elmList) {
+        for (CircuitElement<?> elm : elmList) {
             elm.apply();
         }
+    }
+
+    @SuppressWarnings("all")
+    private boolean elementsValid(Circuit circuit) {
+        for (Pair<Class<?>, IElementChecker<?>> p : CircuitElementFactory.INSTANCE.getElementCheckers()) {
+            Collection<CircuitElement<?>> elements = circuit.sortedElements.get(p.getLeft());
+            if (!elements.isEmpty() && !((IElementChecker) p.getRight()).elementsValid(elements)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     // Solves the set of n linear equations using a LU factorization.
     // On input, b[0..n-1] is the right hand side of the equations,
     // and on output, contains the solution.
     void lu_solve(Circuit circuit) {
-        double a[][] = circuit.circuitMatrix;
+        double[][] a = circuit.circuitMatrix;
         int n = circuit.circuitMatrixSize;
-        int ipvt[] = circuit.circuitPermute;
-        double b[] = circuit.circuitRightSide;
+        int[] ipvt = circuit.circuitPermute;
+        double[] b = circuit.circuitRightSide;
         int i;
 
         // find first nonzero b element
@@ -638,12 +653,13 @@ public enum SimulationEngine {
     // gaussian elimination.  On entry, a[0..n-1][0..n-1] is the
     // matrix to be factored.  ipvt[] returns an integer vector of pivot
     // indices, used in the lu_solve() routine.
+    @SuppressWarnings("all")
     boolean lu_factor(Circuit circuit) {
-        double a[][] = circuit.circuitMatrix;
+        double[][] a = circuit.circuitMatrix;
         int n = circuit.circuitMatrixSize;
-        int ipvt[] = circuit.circuitPermute;
+        int[] ipvt = circuit.circuitPermute;
 
-        double scaleFactors[];
+        double[] scaleFactors;
         int i, j, k;
 
         scaleFactors = new double[n];
@@ -723,18 +739,18 @@ public enum SimulationEngine {
         return true;
     }
 
-    private class FindPathInfo {
+    private static class FindPathInfo {
 
         private static final int VOLTAGE = 2;
         private static final int SHORT = 3;
         private static final int CAP_V = 4;
-        private boolean used[];
-        private int dest;
-        private CircuitElement firstElm;
-        private int type;
-        private Circuit circuit;
+        private final boolean[] used;
+        private final int dest;
+        private final CircuitElement<?> firstElm;
+        private final int type;
+        private final Circuit circuit;
 
-        private FindPathInfo(int t, CircuitElement e, int d, Circuit circuit) {
+        private FindPathInfo(int t, CircuitElement<?> e, int d, Circuit circuit) {
             dest = d;
             type = t;
             firstElm = e;
@@ -757,7 +773,7 @@ public enum SimulationEngine {
             used[n1] = true;
             int i;
             for (i = 0; i != circuit.getCompressedElementList().size(); i++) {
-                CircuitElement ce = circuit.getElm(i);
+                CircuitElement<?> ce = Preconditions.checkNotNull(circuit.getElm(i));
                 if (ce == firstElm) {
                     continue;
                 }

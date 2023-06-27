@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
  */
 public class ResistorElement extends AbstractResistorElement<IEnergyReceiver> {
 
-    private double resistance;
+    private final double resistance;
 
     public ResistorElement(IEnergyReceiver receiver) {
         super(receiver);

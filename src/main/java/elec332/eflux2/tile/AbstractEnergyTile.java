@@ -23,7 +23,7 @@ public class AbstractEnergyTile extends AbstractTileEntity {
     }
 
     @Override
-    public void read(CompoundNBT compound) {
+    public void read(@Nonnull CompoundNBT compound) {
         super.read(compound);
         connectionPointHandler.read(compound.getCompound("cph"));
     }

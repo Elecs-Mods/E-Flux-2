@@ -14,8 +14,8 @@ public class ACSubCircuitChecker implements ISubCircuitChecker {
 
     @Override
     public boolean isSubCircuitValid(ICircuitPart subCircuit) {
-        CircuitElement ve = null;
-        for (CircuitElement ce : subCircuit.getElementPosts().keys()) {
+        CircuitElement<?> ve = null;
+        for (CircuitElement<?> ce : subCircuit.getElementPosts().keys()) {
             EnumElectricityType type = ce.getEnergyObject().getEnergyType();
             if (ce instanceof VoltageElement && type == EnumElectricityType.AC) {
                 if (ve == null) {

@@ -11,6 +11,6 @@ import java.util.List;
  */
 public interface ICircuitCompressor {
 
-    public Multimap<CompressedCircuitElement, CircuitElement> compress(List<CircuitElement> elements, Multimap<ConnectionPoint, CircuitElement<?>> map2);
+    Multimap<CompressedCircuitElement<?>, CircuitElement<?>> compress(List<CircuitElement<?>> elements, Multimap<ConnectionPoint, CircuitElement<?>> map2);
 
 }

@@ -7,6 +7,6 @@ import com.google.common.collect.Multimap;
  */
 public interface ICircuitPart {
 
-    public Multimap<CircuitElement, Integer> getElementPosts();
+    Multimap<CircuitElement<?>, Integer> getElementPosts();
 
 }

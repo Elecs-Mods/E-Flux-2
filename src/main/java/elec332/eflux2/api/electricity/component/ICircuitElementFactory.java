@@ -19,8 +19,8 @@ import java.util.function.Function;
 public interface ICircuitElementFactory {
 
     @Nonnull
-    @SuppressWarnings("all")
-    default public Collection<CircuitElement<?>> wrapComponent(LazyOptional<IElectricityDevice> component) {
+    @SuppressWarnings("ConstantConditions")
+    default Collection<CircuitElement<?>> wrapComponent(LazyOptional<IElectricityDevice> component) {
         if (!component.isPresent()) {
             return Collections.emptySet();
         }
@@ -28,32 +28,32 @@ public interface ICircuitElementFactory {
     }
 
     @Nonnull
-    public Collection<CircuitElement<?>> wrapComponent(IElectricityDevice component);
+    Collection<CircuitElement<?>> wrapComponent(IElectricityDevice component);
 
     @Nonnull
-    public Set<CircuitElement<?>> wrapComponent(IEnergyObject component);
+    Set<CircuitElement<?>> wrapComponent(IEnergyObject component);
 
-    public boolean isPassiveConnector(IElectricityDevice device);
+    boolean isPassiveConnector(IElectricityDevice device);
 
-    public <O extends IEnergyObject, E extends CircuitElement<?>> void registerComponentWrapper(Class<O> clazz, BiConsumer<O, Collection<CircuitElement<?>>> wrapper);
+    <O extends IEnergyObject, E extends CircuitElement<?>> void registerComponentWrapper(Class<O> clazz, BiConsumer<O, Collection<CircuitElement<?>>> wrapper);
 
-    public <O extends IEnergyObject, E extends CircuitElement<O>> void registerComponentWrapper(Class<O> clazz, Class<E> eClass, Function<O, E> wrapper, IElementChecker<E> checker);
+    <O extends IEnergyObject, E extends CircuitElement<O>> void registerComponentWrapper(Class<O> clazz, Class<E> eClass, Function<O, E> wrapper, IElementChecker<E> checker);
 
-    default public <O extends IEnergyObject, E extends CircuitElement<O>> void registerComponentWrapper(Class<O> clazz, Class<E> eClass, Function<O, E> wrapper) {
+    default <O extends IEnergyObject, E extends CircuitElement<O>> void registerComponentWrapper(Class<O> clazz, Class<E> eClass, Function<O, E> wrapper) {
         registerComponentWrapper(clazz, eClass, wrapper, elements -> true);
     }
 
-    public void registerCircuitOptimizer(ICircuitCompressor optimizer);
+    void registerCircuitOptimizer(ICircuitCompressor optimizer);
 
-    public void registerSubCircuitChecker(ISubCircuitChecker circuitChecker);
-
-    @Nonnull
-    public Collection<ICircuitCompressor> getCircuitOptimizers();
+    void registerSubCircuitChecker(ISubCircuitChecker circuitChecker);
 
     @Nonnull
-    public Collection<Pair<Class, IElementChecker>> getElementCheckers();
+    Collection<ICircuitCompressor> getCircuitOptimizers();
 
     @Nonnull
-    public Collection<ISubCircuitChecker> getCircuitCheckers();
+    Collection<Pair<Class<?>, IElementChecker<?>>> getElementCheckers();
+
+    @Nonnull
+    Collection<ISubCircuitChecker> getCircuitCheckers();
 
 }

@@ -21,7 +21,7 @@ public class VoltageSourceSubCircuitChecker implements ISubCircuitChecker {
 
     @Override
     public boolean isSubCircuitValid(ICircuitPart subCircuit) {
-        Multimap<EnumElectricityType, CircuitElement> types = HashMultimap.create();
+        Multimap<EnumElectricityType, CircuitElement<?>> types = HashMultimap.create();
         Map<EnumElectricityType, Double> pow = Maps.newEnumMap(EnumElectricityType.class);
         subCircuit.getElementPosts().forEach((ce, post) -> {
             EnumElectricityType p = ce.getProvidedPowerType(post);
@@ -35,7 +35,7 @@ public class VoltageSourceSubCircuitChecker implements ISubCircuitChecker {
         }
         double ac = pow.get(EnumElectricityType.AC);
         double dc = pow.get(EnumElectricityType.DC);
-        Collection<CircuitElement> biem;
+        Collection<CircuitElement<?>> biem;
         EnumElectricityType t;
         if (ac * 3 >= dc) {
             biem = types.get(EnumElectricityType.DC);

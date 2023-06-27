@@ -82,12 +82,12 @@ public class ConnectionPointHandler {
 
         };
         index++;
-//        if (subIdMap.size() > sideIndex) {
-//            sideIndex = subIdMap.get(ret.hashCode());
-//        } else {
-        subIdMap.add(-1);
-        subIdMap.set(ret.hashCode(), sideIndex);
-//        }
+        if (subIdMap.size() <= ret.hashCode()) {
+            subIdMap.add(-1);
+            subIdMap.set(ret.hashCode(), sideIndex);
+        } else {
+            sideIndex = subIdMap.get(ret.hashCode());
+        }
         connections.put(ret, new ConnectionPoint(tile.get().getPos(), Preconditions.checkNotNull(tile.get().getWorld()), side, sideIndex, edge));
         return ret;
     }
@@ -131,7 +131,7 @@ public class ConnectionPointHandler {
             subIdMap.add(list.getInt(i));
         }
         World world = tile.get().getWorld();
-        if (world != null && world.isRemote) {
+        if (world != null && WorldHelper.isClient(world)) {
             connections.keySet().forEach(k -> {
                 ConnectionPoint old = connections.get(k);
                 ConnectionPoint nw = new ConnectionPoint(tile.get().getPos(), world, old.getSide(), subIdMap.get(k.hashCode()), old.getEdge());

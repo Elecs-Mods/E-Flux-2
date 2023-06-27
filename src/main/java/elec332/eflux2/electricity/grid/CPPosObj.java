@@ -10,6 +10,6 @@ import elec332.eflux2.api.util.ConnectionPoint;
  */
 class CPPosObj {
 
-    Multimap<ConnectionPoint, CircuitElement> connections = HashMultimap.create();
+    Multimap<ConnectionPoint, CircuitElement<?>> connections = HashMultimap.create();
 
 }

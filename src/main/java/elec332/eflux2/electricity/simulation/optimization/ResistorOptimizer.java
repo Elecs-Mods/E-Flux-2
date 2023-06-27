@@ -18,26 +18,26 @@ import java.util.List;
 public final class ResistorOptimizer implements ICircuitCompressor {
 
     @Override
-    public Multimap<CompressedCircuitElement, CircuitElement> compress(List<CircuitElement> elements, Multimap<ConnectionPoint, CircuitElement<?>> map2) {
-        Multimap<CompressedCircuitElement, CircuitElement> ret = HashMultimap.create();
+    public Multimap<CompressedCircuitElement<?>, CircuitElement<?>> compress(List<CircuitElement<?>> elements, Multimap<ConnectionPoint, CircuitElement<?>> map2) {
+        Multimap<CompressedCircuitElement<?>, CircuitElement<?>> ret = HashMultimap.create();
         whileloop:
         while (true) { //Circumvent CME's
             /////////////////////////// TEST
             for (CircuitElement<?> c1 : elements) {
-                if (c1 instanceof AbstractResistorElement && !((AbstractResistorElement) c1).isPolarityAgnostic()) {
-                    AbstractResistorElement re = (AbstractResistorElement) c1;
+                if (c1 instanceof AbstractResistorElement && !((AbstractResistorElement<?>) c1).isPolarityAgnostic()) {
+                    AbstractResistorElement<?> re = (AbstractResistorElement<?>) c1;
                     List<ConnectionPoint> cp = c1.getConnectionPoints();
                     if (cp.size() != 2) {
                         throw new RuntimeException();
                     }
-                    List<AbstractResistorElement> list = Lists.newArrayList();
+                    List<AbstractResistorElement<?>> list = Lists.newArrayList();
                     ConnectionPoint cp1 = trace(list, re, cp.get(0), map2);
                     list.add(re);
                     ConnectionPoint cp2 = trace(list, re, cp.get(1), map2);
                     if (list.size() == 1) {
                         continue;
                     }
-                    CompressedCircuitElement ce = new CombinedResistorElement(cp1, cp2, list);
+                    CompressedCircuitElement<?> ce = new CombinedResistorElement(cp1, cp2, list);
                     ret.putAll(ce, list);
                     elements.removeAll(list);
                     elements.add(ce);
@@ -47,20 +47,20 @@ public final class ResistorOptimizer implements ICircuitCompressor {
             ///////////////////////
 
             for (CircuitElement<?> c1 : elements) {
-                if (c1 instanceof AbstractResistorElement && ((AbstractResistorElement) c1).isPolarityAgnostic()) {
-                    AbstractResistorElement re = (AbstractResistorElement) c1;
+                if (c1 instanceof AbstractResistorElement && ((AbstractResistorElement<?>) c1).isPolarityAgnostic()) {
+                    AbstractResistorElement<?> re = (AbstractResistorElement<?>) c1;
                     List<ConnectionPoint> cp = c1.getConnectionPoints();
                     if (cp.size() != 2) {
                         throw new RuntimeException();
                     }
-                    List<AbstractResistorElement> list = Lists.newArrayList();
+                    List<AbstractResistorElement<?>> list = Lists.newArrayList();
                     ConnectionPoint cp1 = trace(list, re, cp.get(0), map2);
                     list.add(re);
                     ConnectionPoint cp2 = trace(list, re, cp.get(1), map2);
                     if (list.size() == 1) {
                         continue;
                     }
-                    CompressedCircuitElement ce = new CombinedResistorElement(cp1, cp2, list);
+                    CompressedCircuitElement<?> ce = new CombinedResistorElement(cp1, cp2, list);
                     ret.putAll(ce, list);
                     elements.removeAll(list);
                     elements.add(ce);
@@ -72,7 +72,7 @@ public final class ResistorOptimizer implements ICircuitCompressor {
         }
     }
 
-    private ConnectionPoint trace(List<AbstractResistorElement> list, AbstractResistorElement<?> re, ConnectionPoint cp, Multimap<ConnectionPoint, CircuitElement<?>> map) {
+    private ConnectionPoint trace(List<AbstractResistorElement<?>> list, AbstractResistorElement<?> re, ConnectionPoint cp, Multimap<ConnectionPoint, CircuitElement<?>> map) {
         loop:
         while (true) {
             Collection<CircuitElement<?>> ceL = map.get(cp);
@@ -81,7 +81,7 @@ public final class ResistorOptimizer implements ICircuitCompressor {
             }
             for (CircuitElement<?> ce : ceL) {
                 if (ce != re) {
-                    if (ce instanceof AbstractResistorElement && (((AbstractResistorElement) ce).isPolarityAgnostic())) {
+                    if (ce instanceof AbstractResistorElement && (((AbstractResistorElement<?>) ce).isPolarityAgnostic())) {
                         re = (AbstractResistorElement<?>) ce;
                         if (re.getConnectionPoints().size() != 2) {
                             throw new RuntimeException();
@@ -109,12 +109,12 @@ public final class ResistorOptimizer implements ICircuitCompressor {
 
     }
 
-    private class CombinedResistorElement extends CompressedCircuitElement<AbstractResistorElement> {
+    private static class CombinedResistorElement extends CompressedCircuitElement<AbstractResistorElement<?>> {
 
-        CombinedResistorElement(ConnectionPoint start, ConnectionPoint end, List<AbstractResistorElement> res) {
+        CombinedResistorElement(ConnectionPoint start, ConnectionPoint end, List<AbstractResistorElement<?>> res) {
             super(start, end, res);
             this.resistance = 0.0;
-            for (AbstractResistorElement re : elements) {
+            for (AbstractResistorElement<?> re : elements) {
                 this.resistance += re.getResistance();
             }
         }
@@ -140,7 +140,7 @@ public final class ResistorOptimizer implements ICircuitCompressor {
         public void preApply() {
             double powerLeft = volts[0], powerRight = volts[1], diff = Math.abs(getVoltageDiff()), currentLeft = powerLeft;
             boolean invert = powerLeft > powerRight;
-            for (AbstractResistorElement are : elements) {
+            for (AbstractResistorElement<?> are : elements) {
                 double part = are.getResistance() / resistance;
                 boolean swap = (are.combineData && !are.isPolarityAgnostic()) || (are.isPolarityAgnostic() && !invert);
                 int zero = swap ? 1 : 0;

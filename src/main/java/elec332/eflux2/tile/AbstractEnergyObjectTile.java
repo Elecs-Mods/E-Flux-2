@@ -81,6 +81,7 @@ public abstract class AbstractEnergyObjectTile extends AbstractEnergyTile implem
             cap = LazyOptional.of(() -> d);
             ElecCore.tickHandler.registerCall(this::markDirty, getWorld());
             initialized = true;
+            System.out.println("SETCAP");
         }
     }
 

@@ -38,10 +38,10 @@ public enum CircuitElementFactory implements ICircuitElementFactory {
         this.circuitCheckers_ = Collections.unmodifiableSet(circuitCheckers);
     }
 
-    private Map<Class<?>, BiConsumer<IEnergyObject, Collection<CircuitElement<?>>>> cache;
-    private Set<ICircuitCompressor> optimizers, optimizers_;
-    private Map<Integer, Pair<Class, IElementChecker>> elementCheckers;
-    private Set<ISubCircuitChecker> circuitCheckers, circuitCheckers_;
+    private final Map<Class<?>, BiConsumer<IEnergyObject, Collection<CircuitElement<?>>>> cache;
+    private final Set<ICircuitCompressor> optimizers, optimizers_;
+    private final Map<Integer, Pair<Class<?>, IElementChecker<?>>> elementCheckers;
+    private final Set<ISubCircuitChecker> circuitCheckers, circuitCheckers_;
     private int hc = 1000;
 
     @Nonnull
@@ -119,7 +119,7 @@ public enum CircuitElementFactory implements ICircuitElementFactory {
 
     @Nonnull
     @Override
-    public Collection<Pair<Class, IElementChecker>> getElementCheckers() {
+    public Collection<Pair<Class<?>, IElementChecker<?>>> getElementCheckers() {
         return elementCheckers.values();
     }
 

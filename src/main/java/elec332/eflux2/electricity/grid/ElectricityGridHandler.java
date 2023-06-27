@@ -47,11 +47,11 @@ public final class ElectricityGridHandler extends AbstractGridHandler<ETileEntit
         this.wires = Sets.newHashSet();
     }
 
-    private Multimap<Object, CircuitElement<?>> map;
-    private IMultiWorldPositionedObjectHolder<CPPosObj, CPPosObj> cache;
-    private Map<UUID, Circuit> circuits;
-    private Set<CircuitElement<?>> toAddNextTick;
-    private Set<IEnergyObject> wires;
+    private final Multimap<Object, CircuitElement<?>> map;
+    private final IMultiWorldPositionedObjectHolder<CPPosObj, CPPosObj> cache;
+    private final Map<UUID, Circuit> circuits;
+    private final Set<CircuitElement<?>> toAddNextTick;
+    private final Set<IEnergyObject> wires;
 
     @Override
     public void addObjectUnsafe(IEnergyObject wire) {
@@ -117,7 +117,7 @@ public final class ElectricityGridHandler extends AbstractGridHandler<ETileEntit
         if (elm == null) {
             return;
         }
-        Set<CircuitElement> ceL = Sets.newHashSet(elm);
+        Set<CircuitElement<?>> ceL = Sets.newHashSet(elm);
         //if (elm.getCircuit() != null){
         //    System.out.println(((Circuit)elm.getCircuit()).getId());
         //    throw new RuntimeException();
@@ -201,11 +201,13 @@ public final class ElectricityGridHandler extends AbstractGridHandler<ETileEntit
     }
 
     @Override
+    @SuppressWarnings("ConstantConditions")
     public boolean isValidObject(TileEntity tile) {
         LazyOptional<IElectricityDevice> cap = tile.getCapability(EFlux2API.ELECTRICITY_CAP);
         if (!cap.isPresent()) {
             return false;
         }
+        System.out.println(tile.getPos() + "  " + tile + " valid");
         IElectricityDevice eObj = cap.orElse(null);
         return eObj != null && !CircuitElementFactory.INSTANCE.isPassiveConnector(eObj);
     }

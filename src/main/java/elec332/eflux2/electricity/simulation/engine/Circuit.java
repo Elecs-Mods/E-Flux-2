@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import elec332.core.util.IdentityList;
+import elec332.eflux2.EFlux2;
 import elec332.eflux2.api.electricity.component.CircuitElement;
 import elec332.eflux2.api.electricity.component.ICircuit;
 import elec332.eflux2.api.electricity.component.ICircuitPart;
@@ -25,25 +26,28 @@ public final class Circuit implements ICircuit {
 
     boolean needsRebuild;
     boolean rebuilding = false;
-    double circuitMatrix[][], circuitRightSide[], origRightSide[], origMatrix[][];
-    RowInfo circuitRowInfo[];
-    int circuitPermute[];
+    double[][] circuitMatrix;
+    double[] circuitRightSide;
+    double[] origRightSide;
+    double[][] origMatrix;
+    RowInfo[] circuitRowInfo;
+    int[] circuitPermute;
     boolean circuitNonLinear;
     int voltageSourceCount;
     int circuitMatrixSize, circuitMatrixFullSize;
     boolean circuitNeedsMap;
-    CircuitElement stopElm;
+    CircuitElement<?> stopElm;
     boolean dumpMatrix;
     int steps = 0;
     Vector<CircuitNode> nodeList;
-    CircuitElement voltageSources[];
+    CircuitElement<?>[] voltageSources;
     boolean converged;
     int subIterations;
     String stopMessage;
-    Multimap<Class, CircuitElement> sortedElements = HashMultimap.create();
-    private Set<CircuitElement<?>> elmList = Sets.newHashSet();
+    Multimap<Class<?>, CircuitElement<?>> sortedElements = HashMultimap.create();
+    private final Set<CircuitElement<?>> elmList = Sets.newHashSet();
     private List<CircuitElement<?>> compressedElm = null;
-    private List<ICircuitPart> circuitParts = Lists.newArrayList();
+    private final List<ICircuitPart> circuitParts = Lists.newArrayList();
 
     List<CircuitElement<?>> getCompressedElementList() {
         if (compressedElm == null) {
@@ -66,13 +70,13 @@ public final class Circuit implements ICircuit {
         long time = System.currentTimeMillis();
         List<CircuitElement<?>> copy = Lists.newArrayList(elmList), immC = Collections.unmodifiableList(copy);
         Multimap<ConnectionPoint, CircuitElement<?>> data = getData(copy);
-        if (false)
+        if (!EFlux2.noCircuitCompression)
             for (ICircuitCompressor c : CircuitElementFactory.INSTANCE.getCircuitOptimizers()) {
-                Multimap<CompressedCircuitElement, CircuitElement> p = c.compress(Lists.newArrayList(immC), data);
+                Multimap<CompressedCircuitElement<?>, CircuitElement<?>> p = c.compress(Lists.newArrayList(immC), data);
                 if (p.keySet().size() > 0) {
                     boolean doneWork = false;
-                    for (CompressedCircuitElement ce1 : p.keySet()) {
-                        Collection<CircuitElement> r = p.get(ce1);
+                    for (CompressedCircuitElement<?> ce1 : p.keySet()) {
+                        Collection<CircuitElement<?>> r = p.get(ce1);
                         if (r == null || r.size() == 0) {
                             continue;
                         }
@@ -94,11 +98,11 @@ public final class Circuit implements ICircuit {
         circuitParts.clear();
         long test = System.nanoTime();
         List<Set<Integer>> cubCir = new IdentityList<>();
-        Multimap<Integer, Pair<CircuitElement, Integer>> data = HashMultimap.create();
+        Multimap<Integer, Pair<CircuitElement<?>, Integer>> data = HashMultimap.create();
         for (CircuitNode node : nodeList) {
             Set<Integer> myCir = Sets.newHashSet();
             for (CircuitNodeLink link : node.links) {
-                CircuitElement elm = link.elm;
+                CircuitElement<?> elm = link.elm;
                 int n = elm.getNode(link.num);
                 data.get(n).add(Pair.of(elm, link.num));
                 myCir.add(n);
@@ -139,7 +143,7 @@ public final class Circuit implements ICircuit {
         System.out.println(data);
         for (Collection<Integer> c : cubCir) {
             System.out.println(" --");
-            final Multimap<CircuitElement, Integer> eic = HashMultimap.create();
+            final Multimap<CircuitElement<?>, Integer> eic = HashMultimap.create();
             c.stream()
                     .map(data::get)
                     .flatMap(Collection::stream)
@@ -208,7 +212,7 @@ public final class Circuit implements ICircuit {
         return nodeList.elementAt(n);
     }
 
-    CircuitElement getElm(int n) {
+    CircuitElement<?> getElm(int n) {
         if (n >= compressedElm.size()) {
             return null;
         }
@@ -349,7 +353,7 @@ public final class Circuit implements ICircuit {
         }
     }
 
-    void stop(String s, CircuitElement ce) {
+    void stop(String s, CircuitElement<?> ce) {
         System.out.println("ERROR: " + s);
         stopMessage = s;
         circuitMatrix = null;

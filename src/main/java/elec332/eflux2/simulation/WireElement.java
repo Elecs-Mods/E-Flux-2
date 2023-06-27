@@ -2,7 +2,7 @@ package elec332.eflux2.simulation;
 
 import elec332.eflux2.api.electricity.IEnergyReceiver;
 import elec332.eflux2.api.electricity.component.AbstractResistorElement;
-import elec332.eflux2.wire.AbstractWire;
+import elec332.eflux2.modules.wires.wire.AbstractWire;
 
 import javax.annotation.Nullable;
 

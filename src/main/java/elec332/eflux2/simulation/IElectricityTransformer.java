@@ -7,12 +7,12 @@ import elec332.eflux2.api.electricity.IEnergyObject;
  */
 public interface IElectricityTransformer extends IEnergyObject {
 
-    public double getInductance();
+    double getInductance();
 
-    public double getRatio();
+    double getRatio();
 
     @Override
-    default public int getPosts() {
+    default int getPosts() {
         return 4;
     }
 

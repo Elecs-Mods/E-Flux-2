@@ -5,7 +5,7 @@ import elec332.eflux2.api.electricity.component.CircuitElement;
 final class CircuitNodeLink {
 
     int num; //post
-    CircuitElement elm;
+    CircuitElement<?> elm;
 
     @Override
     public String toString() {
